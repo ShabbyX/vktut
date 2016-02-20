@@ -1,0 +1,38 @@
+# autotools generated files
+autom4te.cache
+m4/
+Makefile
+Makefile.in
+configure
+config.status
+libtool
+config.log
+stamp-*
+config.h.in
+config.h
+
+# autotools installed files
+aclocal.m4
+bin/
+
+# build artifacts
+*.o
+*.exe
+*.a
+*.so
+*.la
+*.lo
+test
+.deps
+.libs
+
+# tests
+*.log
+*.trs
+
+# misc
+*.swp
+*~
+
+# build directories
+build*/
