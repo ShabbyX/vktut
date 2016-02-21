@@ -19,8 +19,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
 #include "tut1.h"
+
+#define MAX_DEVICES 2
 
 static void print_surprise(const char *indent, const char *who, const char *what, const char *how)
 {
@@ -48,23 +49,29 @@ static void print_surprise(const char *indent, const char *who, const char *what
 int main(int argc, char **argv)
 {
 	VkResult res;
+	int retval = EXIT_FAILURE;
 	VkInstance vk;
-	struct tut1_physical_device devs[2];
+	struct tut1_physical_device devs[MAX_DEVICES];
+	uint32_t dev_count = MAX_DEVICES;
 
 	/* Fire up Vulkan */
 	res = tut1_init(&vk);
 	if (res)
 	{
 		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
-		return EXIT_FAILURE;
+		goto exit_bad_init;
 	}
 
 	printf("Vulkan is in the house.\n");
 
 	/* Take a look at what devices there are */
-	uint32_t dev_count = sizeof devs / sizeof *devs;
 	res = tut1_enumerate_devices(vk, devs, &dev_count);
-	if (res == VK_INCOMPLETE)
+	if (res < 0)
+	{
+		printf("Could not enumerate devices: %s\n", tut1_VkResult_string(res));
+		goto exit_bad_enumerate;
+	}
+	else if (res == VK_INCOMPLETE)
 	{
 		print_surprise("", "you've got", "devices", "dream of");
 		printf("I have information on only %u of them:\n", dev_count);
@@ -111,10 +118,15 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* Cleanup after yourself */
-	tut1_exit(vk);
-
 	/* Congratulations, you can now duplicate the `vulkaninfo` program. */
 
-	return 0;
+	retval = 0;
+
+	/* Cleanup after yourself */
+
+exit_bad_enumerate:
+	tut1_exit(vk);
+
+exit_bad_init:
+	return retval;
 }

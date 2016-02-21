@@ -132,8 +132,15 @@ VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs
 		 * Once we have handles to each physical device, we can query information regarding the device. This
 		 * is done with vkGetPhysicalDeviceProperties.  The device properties include vendor and device ids,
 		 * driver version, device name, device limits and such information.
+		 *
+		 * While the device properties mostly deal with identifying the physical device, information is
+		 * separately available regarding what the device (or rather the device driver) can do.  These features
+		 * include bound checking on buffer access, whether other-than-1-width lines are supported, whether
+		 * more than one viewport is possible, whether various texture compression algorithms are understood,
+		 * whether certain data types are supported in shaders, and miscellaneous information such as these.
 		 */
 		vkGetPhysicalDeviceProperties(devs[i].physical_device, &devs[i].properties);
+		vkGetPhysicalDeviceFeatures(devs[i].physical_device, &devs[i].features);
 
 		/*
 		 * Each physical device has certain abilities, such as being able to support graphics operations or
@@ -149,6 +156,7 @@ VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs
 		 * number of queue families is assumed.
 		 */
 		uint32_t qfc = 0;
+		devs[i].queue_family_count = TUT1_MAX_QUEUE_FAMILY;
 		vkGetPhysicalDeviceQueueFamilyProperties(devs[i].physical_device, &qfc, NULL);
 		vkGetPhysicalDeviceQueueFamilyProperties(devs[i].physical_device, &devs[i].queue_family_count, devs[i].queue_families);
 
