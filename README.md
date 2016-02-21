@@ -1,5 +1,5 @@
-Vulkan Tutorials
-================
+Shabi's Vulkan Tutorials
+========================
 
 This is a repository of tutorials on Vulkan.  It starts with the basics,
 enumerating your GPUs, allocating memory and getting computation done.  It then
@@ -15,11 +15,17 @@ These tutorials were developed in Linux, and I have no intention of trying them
 on Windows.  Feel free to send a pull request if they needed tweaks to run on
 that.  You would need the following external libraries:
 
-- vulkan, of course
+- Vulkan, of course
 - SDL2
 
 The tutorials are source code themselves, with enough comments in them to
-explain how things are done and/or why.
+explain how things are done and/or why.  I strongly recommend reading the
+Vulkan specifications alongside the tutorials.  It is well-written and easy to
+grasp.
+
+The `main.c` of each tutorial glues together the functionalities implemented in
+the `tut*.c` files, and may include uninteresting things like printing out
+information.  The important stuff is mostly in `tut*.c` files.
 
 Build and Execution
 -------------------
