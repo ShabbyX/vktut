@@ -103,7 +103,7 @@ void tut1_exit(VkInstance vk)
 VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count)
 {
 	VkPhysicalDevice phy_devs[*count];
-	VkResult retval, res;
+	VkResult retval;
 
 	/*
 	 * A physical device in Vulkan is any actual device with Vulkan capabilities.  For example, a physical GPU is
@@ -138,9 +138,17 @@ VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs
 		 * include bound checking on buffer access, whether other-than-1-width lines are supported, whether
 		 * more than one viewport is possible, whether various texture compression algorithms are understood,
 		 * whether certain data types are supported in shaders, and miscellaneous information such as these.
+		 *
+		 * The information on the device memories can also be queried.  The device memory is divided in
+		 * "heaps", and each heap may contain memory of several "types".  A memory type indicates whether the
+		 * memory is visible to host (CPU) and other such properties.  The memory types are returned in an
+		 * array, sorted in such a way that if you are looking for a memory with certain properties, the first
+		 * memory you would find (searching from the first element of the array), would be the most efficient
+		 * for that purpose.  This is useful in future tutorials when we actually allocate device memory.
 		 */
 		vkGetPhysicalDeviceProperties(devs[i].physical_device, &devs[i].properties);
 		vkGetPhysicalDeviceFeatures(devs[i].physical_device, &devs[i].features);
+		vkGetPhysicalDeviceMemoryProperties(devs[i].physical_device, &devs[i].memories);
 
 		/*
 		 * Each physical device has certain abilities, such as being able to support graphics operations or

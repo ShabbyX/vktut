@@ -33,6 +33,7 @@ struct tut1_physical_device
 	VkPhysicalDevice physical_device;
 	VkPhysicalDeviceProperties properties;
 	VkPhysicalDeviceFeatures features;
+	VkPhysicalDeviceMemoryProperties memories;
 
 	VkQueueFamilyProperties queue_families[TUT1_MAX_QUEUE_FAMILY];
 	uint32_t queue_family_count;

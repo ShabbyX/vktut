@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "tut1.h"
 
 #define MAX_DEVICES 2
@@ -74,10 +75,10 @@ int main(int argc, char **argv)
 	else if (res == VK_INCOMPLETE)
 	{
 		print_surprise("", "you've got", "devices", "dream of");
-		printf("I have information on only %u of them:\n", dev_count);
+		printf("I have information on only %"PRIu32" of them:\n", dev_count);
 	}
 	else
-		printf("I detected the following %u device%s:\n", dev_count, dev_count == 1?"":"s");
+		printf("I detected the following %"PRIu32" device%s:\n", dev_count, dev_count == 1?"":"s");
 
 	/*
 	 * Print out some of the information taken when enumerating physical devices.  This is by no means an
@@ -94,16 +95,16 @@ int main(int argc, char **argv)
 		if (dev->queue_families_incomplete)
 		{
 			print_surprise("    ", "your device", "queue families", "imagine");
-			printf("    I have information on only %u of them:\n", dev->queue_family_count);
+			printf("    I have information on only %"PRIu32" of them:\n", dev->queue_family_count);
 		}
 		else
-			printf("    The device supports the following %u queue famil%s:\n", dev->queue_family_count, dev->queue_family_count == 1?"y":"ies");
+			printf("    The device supports the following %"PRIu32" queue famil%s:\n", dev->queue_family_count, dev->queue_family_count == 1?"y":"ies");
 
 		for (uint32_t j = 0; j < dev->queue_family_count; ++j)
 		{
 			VkQueueFamilyProperties *qf = &dev->queue_families[j];
 
-			printf("    * %u queue%s with the following capabilit%s:\n", qf->queueCount, qf->queueCount == 1?"":"s",
+			printf("    * %"PRIu32" queue%s with the following capabilit%s:\n", qf->queueCount, qf->queueCount == 1?"":"s",
 					qf->queueFlags && (qf->queueFlags & (qf->queueFlags - 1)) == 0?"y":"ies");
 			if (qf->queueFlags == 0)
 				printf("          None\n");
@@ -115,6 +116,25 @@ int main(int argc, char **argv)
 				printf("          Transfer\n");
 			if ((qf->queueFlags & VK_QUEUE_SPARSE_BINDING_BIT))
 				printf("          Sparse binding\n");
+		}
+
+		printf("    The device supports memories of the following types:\n");
+		for (uint32_t j = 0; j < dev->memories.memoryTypeCount; ++j)
+		{
+			printf("    *");
+			if (dev->memories.memoryTypes[j].propertyFlags == 0)
+				printf(" <no properties>");
+			if ((dev->memories.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+				printf(" device-local");
+			if ((dev->memories.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+				printf(" host-visible");
+			if ((dev->memories.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+				printf(" host-coherent");
+			if ((dev->memories.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT))
+				printf(" host-cached");
+			if ((dev->memories.memoryTypes[j].propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT))
+				printf(" lazy");
+			printf(": Available in Heap of size %"PRIu64"MB\n", dev->memories.memoryHeaps[dev->memories.memoryTypes[j].heapIndex].size / (1024 * 1024));
 		}
 	}
 
