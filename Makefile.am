@@ -12,3 +12,23 @@ tut2_tut2_SOURCES = tut2/tut2.c \
                     tut2/main.c \
                     tut2/tut2.h \
                     tut1/tut1.c
+
+bin_PROGRAMS += tut3/tut3
+tut3_tut3_SOURCES = tut3/tut3.c \
+                    tut3/main.c \
+                    tut3/tut3.h \
+                    tut2/tut2.c \
+                    tut1/tut1.c
+
+shaderdir = $(datadir)/shaders
+shader_DATA = shaders/tut3.comp.spv
+CLEANFILES = $(shader_DATA)
+
+V_GLSLANG = $(V_GLSLANG_@AM_V@)
+V_GLSLANG_ = $(V_GLSLANG_@AM_DEFAULT_V@)
+V_GLSLANG_0 = @echo "  GLSLANG " $@;
+V_GLSLANG_1 =
+
+%.spv: %
+	@$(mkdir_p) $(builddir)/shaders
+	$(V_GLSLANG)glslangValidator -V $< -o $@

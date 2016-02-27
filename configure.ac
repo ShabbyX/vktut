@@ -4,7 +4,7 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE([1.14 subdir-objects -Wall -Werror foreign])
+AM_INIT_AUTOMAKE([1.14 subdir-objects -Wall -Wno-portability -Werror foreign])
 
 AC_CONFIG_SRCDIR([tut1/main.c])
 AC_CONFIG_HEADERS([config.h])

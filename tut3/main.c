@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "tut2.h"
+#include "tut3.h"
 
 #define MAX_DEVICES 2
 
@@ -31,6 +31,14 @@ int main(int argc, char **argv)
 	struct tut1_physical_device phy_devs[MAX_DEVICES];
 	struct tut2_device devs[MAX_DEVICES];
 	uint32_t dev_count = MAX_DEVICES;
+	VkShaderModule shaders[MAX_DEVICES] = {NULL};
+	struct tut3_pipelines pipelines[MAX_DEVICES];
+
+	if (argc < 2)
+	{
+		printf("Usage: %s shader_file\n\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
 	/* Fire up Vulkan */
 	res = tut1_init(&vk);
@@ -40,7 +48,7 @@ int main(int argc, char **argv)
 		goto exit_bad_init;
 	}
 
-	/* Take a look at what devices there are */
+	/* Enumerate devices */
 	res = tut1_enumerate_devices(vk, phy_devs, &dev_count);
 	if (res < 0)
 	{
@@ -48,10 +56,7 @@ int main(int argc, char **argv)
 		goto exit_bad_enumerate;
 	}
 
-	/*
-	 * Set up devices.  In the early tutorials, we will use the simpler compute queues rather than graphics.  This
-	 * may not be as cool, but directly moving on to graphics is a large step.
-	 */
+	/* Set up devices */
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut2_setup(&phy_devs[i], &devs[i], VK_QUEUE_COMPUTE_BIT);
@@ -62,18 +67,50 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/*
-	 * Let's take a break at this point.  There is already a lot of information in this tutorial and we need a few
-	 * more things to set up before we can do anything.  You probably had heard that Vulkan is a verbose API.
-	 *
-	 * [Drops mic]
-	 */
+	/* Load our compute shader */
+	for (uint32_t i = 0; i < dev_count; ++i)
+	{
+		res = tut3_load_shader(&devs[i], argv[1], &shaders[i]);
+		if (res)
+		{
+			printf("Could not load shader on device %u: %s\n", i, tut1_VkResult_string(res));
+			goto exit_bad_shader;
+		}
+	}
 
-	printf("Got queues and command buffers, it was nice.\n");
+	printf("Loaded the shader, awesome!\n");
+
+	/*
+	 * Create the pipelines.  There are as many pipelines created as command buffers (just for example).  If
+	 * there are not actually enough resources for them, as many as possible are created.
+	 */
+	for (uint32_t i = 0; i < dev_count; ++i)
+		tut3_make_compute_pipeline(&devs[i], &pipelines[i], shaders[i]);
+
+	/*
+	 * Like tutorial 2, we have covered a lot of ground in this tutorial.  Let's keep actual usage of our compute
+	 * shader to the next tutorial, where we would see the effect of multiple threads on the processing speed.
+	 */
+	for (uint32_t i = 0; i < dev_count; ++i)
+	{
+		uint32_t count = 0;
+		for (uint32_t j = 0; j < pipelines[i].pipeline_count; ++j)
+			if (pipelines[i].pipelines[j].pipeline)
+				++count;
+
+		printf("Created %u pipeline%s on device %u\n", count, count == 1?"":"s", i);
+	}
 
 	retval = 0;
 
 	/* Cleanup after yourself */
+
+	for (uint32_t i = 0; i < dev_count; ++i)
+		tut3_destroy_pipeline(&devs[i], &pipelines[i]);
+
+exit_bad_shader:
+	for (uint32_t i = 0; i < dev_count; ++i)
+		tut3_free_shader(&devs[i], shaders[i]);
 
 exit_bad_setup:
 	for (uint32_t i = 0; i < dev_count; ++i)

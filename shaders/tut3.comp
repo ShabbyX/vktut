@@ -1,0 +1,22 @@
+/*
+ * To use this shader, you need to generate a SPIR-V binary file out of it.
+ * This can be done with glslangValidator (automatically done by make):
+ *
+ *     glslangValidator -V tut3.comp -o tut3.comp.spv
+ *
+ * You then need to give the SPIR-V file path to the tut3 executable.
+ */
+
+#version 450
+
+#extension GL_ARB_separate_shader_objects: enable
+#extension GL_ARB_shading_language_420pack: enable
+
+layout (set = 0, binding = 0, r32f) uniform imageBuffer buf;
+
+void main()
+{	
+	int n = imageSize(buf);
+	for (int i = 0; i < n; ++i)
+		imageStore(buf, i, imageLoad(buf, i) + 1);
+}
