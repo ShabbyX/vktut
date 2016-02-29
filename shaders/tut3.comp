@@ -4,7 +4,7 @@
  *
  *     glslangValidator -V tut3.comp -o tut3.comp.spv
  *
- * You then need to give the SPIR-V file path to the tut3 executable.
+ * You then need to give the SPIR-V file path to the tut3 or tut4 executables.
  */
 
 #version 450
@@ -12,11 +12,10 @@
 #extension GL_ARB_separate_shader_objects: enable
 #extension GL_ARB_shading_language_420pack: enable
 
+layout (local_size_x = 64) in;
 layout (set = 0, binding = 0, r32f) uniform imageBuffer buf;
 
 void main()
 {	
-	int n = imageSize(buf);
-	for (int i = 0; i < n; ++i)
-		imageStore(buf, i, imageLoad(buf, i) + 1);
+	imageStore(buf, int(gl_GlobalInvocationID.x), imageLoad(buf, int(gl_GlobalInvocationID.x)) + 1);
 }

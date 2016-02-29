@@ -21,7 +21,7 @@ AS_IF([test x"$ac_cv_prog_cc_c99" = xno],
   AC_MSG_ERROR([C99 support is required]))
 
 # Checks for header files
-AC_CHECK_HEADERS([stddef.h stdlib.h string.h], [], [AC_MSG_ERROR(Required header missing)])
+AC_CHECK_HEADERS([stddef.h stdlib.h string.h time.h pthread.h], [], [AC_MSG_ERROR(Required header missing)])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -29,6 +29,8 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions
 AC_CHECK_FUNCS([malloc realloc memmove memset], [], [AC_MSG_ERROR(Required function missing)])
+AC_CHECK_LIB([pthread], [pthread_create])
+AC_CHECK_LIB([rt], [clock_gettime])
 
 # Now that the basics are checked, make sure vulkan is installed
 AC_CHECK_HEADER([vulkan/vulkan.h], [], [AC_MSG_ERROR(Vulkan header not found)])
