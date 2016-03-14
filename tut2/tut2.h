@@ -38,7 +38,20 @@ struct tut2_device
 	uint32_t command_pool_count;
 };
 
-VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags);
+VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count);
+VkResult tut2_get_commands(struct tut2_device *dev, VkQueueFlags qflags, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count);
+
+static inline VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
+{
+	VkDeviceQueueCreateInfo queue_info[phy_dev->queue_family_count];
+	uint32_t queue_info_count = phy_dev->queue_family_count;
+
+	VkResult res = tut2_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
+	if (res == 0)
+		res = tut2_get_commands(dev, qflags, queue_info, queue_info_count);
+	return res;
+}
 void tut2_cleanup(struct tut2_device *dev);
 
 #endif

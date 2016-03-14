@@ -18,9 +18,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "tut2.h"
 
-VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
+VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count)
 {
 	/*
 	 * A Vulkan logical device is a connection to a physical device, which is used to interact with that device.
@@ -41,26 +43,38 @@ VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *de
 	 * the capabilities requested (`qflags`).
 	 *
 	 * The VkDeviceQueueCreateInfo takes the index of queue family (as recovered in the list of
-	 * VkQueueFamilyProperties) so that the driver knows which queue family you are refering to, as well as the
-	 * number of actual queues that need to be dedicated to the application.
+	 * VkQueueFamilyProperties) so that the driver knows which queue family you are referring to, as well as the
+	 * number of actual queues that need to be dedicated to the application.  Each queue in the queue family is
+	 * given a priority between 0 (low) and 1 (high) and therefore an array of priorities is also provided to
+	 * VkDeviceQueueCreateInfo.  What effects priorities actually have on the execution of queues are left to the
+	 * drivers.  We'll ignore that and just give them all an equal priority of 0.
 	 */
-	VkDeviceQueueCreateInfo queue_info[phy_dev->queue_family_count];
-	uint32_t queue_info_count = 0;
+	uint32_t max_queue_count = *queue_info_count;
+	*queue_info_count = 0;
+
+	uint32_t max_family_queues = 0;
 	for (uint32_t i = 0; i < phy_dev->queue_family_count; ++i)
+		if (max_family_queues < phy_dev->queue_families[i].queueCount)
+			max_family_queues = phy_dev->queue_families[i].queueCount;
+	float queue_priorities[max_family_queues];
+	memset(queue_priorities, 0, sizeof queue_priorities);
+
+	for (uint32_t i = 0; i < phy_dev->queue_family_count && i < max_queue_count; ++i)
 	{
 		/* Check if the queue has the desired capabilities.  If so, add it to the list of desired queues */
 		if ((phy_dev->queue_families[i].queueFlags & qflags) != qflags)
 			continue;
 
-		queue_info[queue_info_count++] = (VkDeviceQueueCreateInfo){
+		queue_info[(*queue_info_count)++] = (VkDeviceQueueCreateInfo){
 			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			.queueFamilyIndex = i,
 			.queueCount = phy_dev->queue_families[i].queueCount,
+			.pQueuePriorities = queue_priorities,
 		};
 	}
 
 	/* If there are no compatible queues, there is little one can do here */
-	if (queue_info_count == 0)
+	if (*queue_info_count == 0)
 		return VK_ERROR_FEATURE_NOT_PRESENT;
 
 	/*
@@ -77,12 +91,10 @@ VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *de
 	 */
 	VkDeviceCreateInfo dev_info = {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-		.queueCreateInfoCount = queue_info_count,
+		.queueCreateInfoCount = *queue_info_count,
 		.pQueueCreateInfos = queue_info,
 		.pEnabledFeatures = &phy_dev->features,
 	};
-
-	VkResult retval, res;
 
 	/*
 	 * All API functions that create something follow the same general rule.  The handle of the object to be
@@ -93,9 +105,12 @@ VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *de
 	 * vkCreateDevice is no exception.  We are not yet using custom memory allocation functions, so they are
 	 * unused.  The rest is already explained.
 	 */
-	retval = vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
-	if (retval < 0)
-		goto exit_failed;
+	return vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+}
+
+VkResult tut2_get_commands(struct tut2_device *dev, VkQueueFlags qflags, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count)
+{
+	VkResult retval = 0, res;
 
 	/*
 	 * Now that we have a device handle, we can start talking with it using command buffers.  A command buffer is
