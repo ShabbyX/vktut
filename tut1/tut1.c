@@ -58,7 +58,7 @@ VkResult tut1_init(VkInstance *vk)
 		 * you want to say that your application would work with any version above 1.0.3 for example, you would
 		 * set apiVersion to VK_MAKE_VERSION(1, 0, 3)
 		 */
-		.apiVersion = VK_API_VERSION,
+		.apiVersion = VK_MAKE_VERSION(1, 0, 3), //VK_API_VERSION,
 	};
 
 	/*
