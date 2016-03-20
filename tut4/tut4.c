@@ -131,7 +131,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 *
 	 * If the memory is not host-coherent, then we need to flush application writes, invalidate application caches
 	 * before reads, and insert memory barriers after device writes.  For the sake of simplicity, as this tutorial
-	 * is already huge, let's just ask for host-coherent memory.
+	 * is already huge, let's just ask for host-coherent memory.  Such a memory may not be available on all
+	 * devices, so ideally you would want to look for host-coherent memory, and if not found be prepared to do the
+	 * above flushes, cache invalidations and barriers.
 	 */
 	vkGetBufferMemoryRequirements(dev->device, test_data->buffer, &mem_req);
 	mem_index = tut4_find_suitable_memory(phy_dev, dev, &mem_req,
