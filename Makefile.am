@@ -28,6 +28,13 @@ tut4_tut4_SOURCES = tut4/tut4.c \
                     tut2/tut2.c \
                     tut1/tut1.c
 
+bin_PROGRAMS += tut5/tut5
+tut5_tut5_SOURCES = tut5/tut5.c \
+                    tut5/main.c \
+                    tut5/tut5.h \
+                    tut2/tut2.c \
+                    tut1/tut1.c
+
 shaderdir = $(datadir)/shaders
 shader_DATA = shaders/tut3.comp.spv
 CLEANFILES = $(shader_DATA)
