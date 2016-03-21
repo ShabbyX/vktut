@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	uint32_t dev_count = MAX_DEVICES;
 
 	/* Fire up Vulkan */
-	res = tut1_init(&vk);
+	res = tut5_init(&vk);
 	if (res)
 	{
 		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
