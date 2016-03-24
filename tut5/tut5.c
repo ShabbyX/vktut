@@ -156,13 +156,16 @@ VkResult tut5_init(VkInstance *vk)
 	/*
 	 * Enabling the layers and extensions is now just a matter of giving these names to the VkInstanceCreateInfo
 	 * struct.  In Tutorial 1, we had just given 0 as the layer and extension counts.
+	 *
+	 * Note: enabling all layers causes a crash at the time of this writing!  I have put a *0 where the layer count
+	 * is taken for now, but regardless, you now know how to iterate through the available layers.
 	 */
 	info = (VkInstanceCreateInfo){
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 		.pApplicationInfo = &app_info,
 		.enabledLayerCount = layer_count * 0,
 		.ppEnabledLayerNames = layer_names,
-		.enabledExtensionCount = total_extensions_count * 0,
+		.enabledExtensionCount = total_extensions_count,
 		.ppEnabledExtensionNames = extension_names,
 	};
 
@@ -238,7 +241,7 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 		.pQueueCreateInfos = queue_info,
 		.enabledLayerCount = layer_count * 0,
 		.ppEnabledLayerNames = layer_names,
-		.enabledExtensionCount = total_extensions_count * 0,
+		.enabledExtensionCount = total_extensions_count,
 		.ppEnabledExtensionNames = extension_names,
 		.pEnabledFeatures = &phy_dev->features,
 	};
