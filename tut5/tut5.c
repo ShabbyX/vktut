@@ -129,7 +129,7 @@ VkResult tut5_init(VkInstance *vk)
 		.applicationVersion = 0x010000,
 		.pEngineName = "Vulkan Tutorial",
 		.engineVersion = 0x010000,
-		.apiVersion = VK_MAKE_VERSION(1, 0, 3),
+		.apiVersion = VK_API_VERSION_1_0,
 	};
 	VkInstanceCreateInfo info;
 

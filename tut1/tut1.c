@@ -53,12 +53,11 @@ VkResult tut1_init(VkInstance *vk)
 		.pEngineName = "Vulkan Tutorial",
 		.engineVersion = 0x010000,
 		/*
-		 * the apiVersion field is used to make sure your application is going to work with the driver.  I have
-		 * set it to VK_API_VERSION, which is the current version of the API installed on your computer.  If
-		 * you want to say that your application would work with any version above 1.0.3 for example, you would
-		 * set apiVersion to VK_MAKE_VERSION(1, 0, 3)
+		 * the apiVersion field is used to make sure your application is going to work with the driver.  You
+		 * could either use VK_MAKE_VERSION to specify a particular version, e.g. VK_MAKE_VERSION(1, 0, 0), or
+		 * use a predefined value, for example VK_API_VERSION_1_0.
 		 */
-		.apiVersion = VK_MAKE_VERSION(1, 0, 3), //VK_API_VERSION,
+		.apiVersion = VK_API_VERSION_1_0,
 	};
 
 	/*
