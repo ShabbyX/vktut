@@ -22,7 +22,9 @@ that.  You would need the following external libraries:
 The tutorials are source code themselves, with enough comments in them to
 explain how things are done and/or why.  I strongly recommend reading the
 Vulkan specifications alongside the tutorials.  It is well-written and easy to
-grasp.
+grasp.  Also note that Vulkan is not for the faint of heart.  I expect you are
+not struggling with reading C code and have some understanding of computer
+graphics and operating systems.
 
 The `main.c` of each tutorial glues together the functionalities implemented in
 the `tut*.c` files, and may include uninteresting things like printing out
