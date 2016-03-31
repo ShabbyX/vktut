@@ -17,6 +17,7 @@ that.  You would need the following external libraries:
 
 - Vulkan, of course
 - SDL2
+- X11-xcb
 
 The tutorials are source code themselves, with enough comments in them to
 explain how things are done and/or why.  I strongly recommend reading the
@@ -25,7 +26,7 @@ grasp.
 
 The `main.c` of each tutorial glues together the functionalities implemented in
 the `tut*.c` files, and may include uninteresting things like printing out
-information.  The important stuff is mostly in `tut*.c` files.
+information.  The important stuff is usually in `tut*.c` files.
 
 Build and Execution
 -------------------
