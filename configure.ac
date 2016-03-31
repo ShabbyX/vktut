@@ -38,8 +38,11 @@ AC_CHECK_LIB([vulkan], [vkCreateInstance], [], [AC_MSG_ERROR(Vulkan library not 
 
 # Make sure external dependencies are also installed
 # - SDL2:
+# - XCB and Xlib
 AC_CHECK_HEADER([SDL2/SDL.h], [], [AC_MSG_ERROR(SDL2 headers not found)])
 AC_CHECK_LIB([SDL2], [SDL_Init], [], [AC_MSG_ERROR(SDL2 library not found)])
+AC_CHECK_HEADER([X11/Xlib-xcb.h], [], [AC_MSG_ERROR(Xlib-xcb header missing)])
+AC_CHECK_LIB([X11-xcb], [XGetXCBConnection], [], [AC_MSG_ERROR(X11 library not found)])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
