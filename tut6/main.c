@@ -117,8 +117,8 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			 * recall from Tutorial 2, creating a logical device requires requesting queues from the
 			 * device's queue families.  If you perform this operation beforehand and you are only
 			 * interested in presenting images, you would be able to avoid requesting for queue families
-			 * that doesn't support it.  In Tutorial 2, we just asked for all queue families there are,
-			 * which is not the nicest thing.
+			 * that don't support it.  In Tutorial 2, we just asked for all queue families there are, which
+			 * is not the nicest thing.
 			 */
 			res = vkGetPhysicalDeviceSurfaceSupportKHR(phy_devs[i].physical_device, j, swapchains[i].surface, &supports);
 			if (res)
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 	 */
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
-		res = tut6_setup(&phy_devs[i], &devs[i], VK_QUEUE_COMPUTE_BIT);
+		res = tut6_setup(&phy_devs[i], &devs[i], VK_QUEUE_GRAPHICS_BIT);
 		if (res < 0)
 		{
 			printf("Could not setup logical device %u, command pools and queues: %s\n", i, tut1_VkResult_string(res));
