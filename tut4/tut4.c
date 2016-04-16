@@ -168,7 +168,7 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 *
 	 * If the pool allows individual descriptor sets to be returned to the pool, a corresponding flag needs to be
 	 * set.  We won't need that in this tutorial.  Other information given to create the pool are the maximum
-	 * number of descriptor sets that can be allocated from the pool, and how many descriptor of each type are
+	 * number of descriptor sets that can be allocated from the pool, and how many descriptors of each type are
 	 * allowed to be allocated.  We are going to have thead_count descriptor sets, all of the same type (storage
 	 * texel buffer), so this is quite simple.
 	 */

@@ -213,14 +213,13 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 *         swapchainFormat = pSurfFormats[0].format;
 	 *     }
 	 */
-	VkSurfaceFormatKHR surface_format;
 	uint32_t surface_format_count = 1;
-	retval = vkGetPhysicalDeviceSurfaceFormatsKHR(phy_dev->physical_device, swapchain->surface, &surface_format_count, &surface_format);
+	retval = vkGetPhysicalDeviceSurfaceFormatsKHR(phy_dev->physical_device, swapchain->surface, &surface_format_count, &swapchain->surface_format);
 	if (retval < 0)
 		goto exit_failed;
 
-	if (surface_format_count == 1 && surface_format.format == VK_FORMAT_UNDEFINED)
-		surface_format.format = VK_FORMAT_R8G8B8_UNORM;
+	if (surface_format_count == 1 && swapchain->surface_format.format == VK_FORMAT_UNDEFINED)
+		swapchain->surface_format.format = VK_FORMAT_R8G8B8_UNORM;
 
 	/*
 	 * When a buffer (i.e., image) is rendered into, it needs to be sent to the presentation engine for rendering.
@@ -311,8 +310,8 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 		.surface = swapchain->surface,
 		.minImageCount = image_count,
-		.imageFormat = surface_format.format,
-		.imageColorSpace = surface_format.colorSpace,
+		.imageFormat = swapchain->surface_format.format,
+		.imageColorSpace = swapchain->surface_format.colorSpace,
 		.imageExtent = swapchain->surface_caps.currentExtent.width == 0xFFFFFFFF?
 			swapchain->surface_caps.minImageExtent:
 			swapchain->surface_caps.currentExtent,

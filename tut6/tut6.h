@@ -57,6 +57,7 @@ struct tut6_swapchain
 	VkSurfaceKHR surface;
 	VkSwapchainKHR swapchain;
 
+	VkSurfaceFormatKHR surface_format;
 	VkSurfaceCapabilitiesKHR surface_caps;
 	VkPresentModeKHR present_modes[TUT6_MAX_PRESENT_MODES];
 	uint32_t present_modes_count;
