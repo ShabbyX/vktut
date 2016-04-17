@@ -340,10 +340,8 @@ void tut6_free_swapchain(VkInstance vk, struct tut2_device *dev, struct tut6_swa
 	 *
 	 * As usual, no memory allocation callbacks.
 	 */
-	if (swapchain->swapchain)
-		vkDestroySwapchainKHR(dev->device, swapchain->swapchain, NULL);
-	if (swapchain->surface)
-		vkDestroySurfaceKHR(vk, swapchain->surface, NULL);
+	vkDestroySwapchainKHR(dev->device, swapchain->swapchain, NULL);
+	vkDestroySurfaceKHR(vk, swapchain->surface, NULL);
 
 	*swapchain = (struct tut6_swapchain){0};
 }
