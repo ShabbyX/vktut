@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 	 * number of threads, you can see the benefit of multi-threading.  In this case, while the GPU is working, the
 	 * CPU thread spends time fake-doing something.  If there is only one thread, the CPU cannot keep the GPU
 	 * constantly busy, so the computation slows down.  On the other hand, with multiple threads, the same amount
-	 * of CPU work is spreaded out and done in parallel, so the threads together can feed the GPU with instructions
+	 * of CPU work is spread out and done in parallel, so the threads together can feed the GPU with instructions
 	 * faster.
 	 *
 	 * In this test, the total amount of time to waste is 3.2 seconds (32ms for each "render" operation, and there

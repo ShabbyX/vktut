@@ -34,6 +34,9 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 	void *code = NULL;
 	size_t size = 0, cur = 0;
 	FILE *fin = fopen(spirv_file, "rb");
+
+	*shader = NULL;
+
 	if (fin == NULL)
 		return VK_ERROR_INITIALIZATION_FAILED;	/* For the lack of a better error code */
 

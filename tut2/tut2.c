@@ -40,7 +40,7 @@ VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 	 * As we have seen in Tutorial 1, the physical device can possibly support multiple queue families, each with
 	 * different capabilities.  When create a logical device, we also ask for a set of queues to be allocated for
 	 * us.  Here, I'm using the information we recovered in Tutorial 1 and ask for all available queues that match
-	 * the capabilities requested (`qflags`).
+	 * any of the capabilities requested (`qflags`).
 	 *
 	 * The VkDeviceQueueCreateInfo takes the index of queue family (as recovered in the list of
 	 * VkQueueFamilyProperties) so that the driver knows which queue family you are referring to, as well as the
@@ -61,8 +61,8 @@ VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 
 	for (uint32_t i = 0; i < phy_dev->queue_family_count && i < max_queue_count; ++i)
 	{
-		/* Check if the queue has the desired capabilities.  If so, add it to the list of desired queues */
-		if ((phy_dev->queue_families[i].queueFlags & qflags) != qflags)
+		/* Check if the queue has any of the desired capabilities.  If so, add it to the list of desired queues */
+		if ((phy_dev->queue_families[i].queueFlags & qflags) == 0)
 			continue;
 
 		queue_info[(*queue_info_count)++] = (VkDeviceQueueCreateInfo){
@@ -108,7 +108,7 @@ VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 	return vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
 }
 
-VkResult tut2_get_commands(struct tut2_device *dev, VkQueueFlags qflags, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count)
+VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count)
 {
 	VkResult retval = 0, res;
 
@@ -134,6 +134,12 @@ VkResult tut2_get_commands(struct tut2_device *dev, VkQueueFlags qflags, VkDevic
 	{
 		struct tut2_commands *cmd = &dev->command_pools[i];
 		*cmd = (struct tut2_commands){0};
+
+		/*
+		 * Remember the actual queue flags for each queue, so that later we can know which queue had which of
+		 * the capabilities we asked of it.
+		 */
+		cmd->qflags = phy_dev->queue_families[queue_info[i].queueFamilyIndex].queueFlags;
 
 		/*
 		 * The vkCreateCommandPool takes a VkCommandPoolCreateInfo that tells it what queue family the pool

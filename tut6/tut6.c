@@ -67,7 +67,7 @@ VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_devi
 	for (uint32_t i = 0; i < phy_dev->queue_family_count && i < max_queue_count; ++i)
 	{
 		/* Check if the queue has the desired capabilities.  If so, add it to the list of desired queues */
-		if ((phy_dev->queue_families[i].queueFlags & qflags) != qflags)
+		if ((phy_dev->queue_families[i].queueFlags & qflags) == 0)
 			continue;
 
 		queue_info[(*queue_info_count)++] = (VkDeviceQueueCreateInfo){

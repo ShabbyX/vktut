@@ -38,7 +38,7 @@ static inline VkResult tut5_setup(struct tut1_physical_device *phy_dev, struct t
 
 	VkResult res = tut5_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
 	if (res == 0)
-		res = tut2_get_commands(dev, qflags, queue_info, queue_info_count);
+		res = tut2_get_commands(phy_dev, dev, queue_info, queue_info_count);
 	return res;
 }
 
