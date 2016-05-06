@@ -194,7 +194,7 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	/*
 	 * The surface can present the data in some format, for example 32-bit BGRA.  It also works in a color-space,
 	 * such as sRGB.  When creating a swapchain, we should indicate which of the supported color formats and
-	 * color-space we want to use.
+	 * color-spaces we want to use.
 	 *
 	 * Here, we are going to go ahead and just take the first supported format.  If only one format is returned and
 	 * it's "undefined", then we will go with 24-bit RGB.  This is not (yet) specified directly in the Vulkan

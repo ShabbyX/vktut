@@ -164,9 +164,8 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		 * with finishing up the execution, or calculating more side effects.
 		 *
 		 * Since we are just using 1 thread, the task is a lot simpler.  We simply take an image, do something
-		 * with it, and give it back.  To actually render something, even to clear the screen, we would need to
-		 * have a graphics pipeline set up.  This would need more work, so we'll leave that to the next
-		 * tutorial.
+		 * with it, and give it back.  To actually render something, we would need to have a graphics pipeline
+		 * set up.  This would need more work, so we'll leave that to another tutorial.
 		 */
 
 		for (uint32_t i = 0; i < dev_count; ++i)
