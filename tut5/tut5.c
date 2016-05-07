@@ -222,10 +222,9 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 		return VK_ERROR_FEATURE_NOT_PRESENT;
 
 	/*
-	 * If we want to enable layers and extensions for a specific device, we have to have enabled them for the		// TODO: verify
-	 * Vulkan instance before.  In tut5_init, we enabled all layers and extensions that there are.  Here, we will
-	 * again enable every layer and extension available.  In reality, you would likely have a predefined array of
-	 * layer and extension names that you are interested in, and therefore you wouldn't need to enumerate anything.
+	 * In tut5_init, we enabled all layers and extensions that there are.  Here, we will again enable every layer
+	 * and extension available.  In reality, you would likely have a predefined array of layer and extension names
+	 * that you are interested in, and therefore you wouldn't need to enumerate anything.
 	 */
 	retval = get_device_layers_and_extensions(phy_dev->physical_device, layers, &layer_count, extensions, extensions_count);
 	if (retval < 0)
