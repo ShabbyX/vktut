@@ -311,7 +311,7 @@ int main(int argc, char **argv)
 		if (windows[i] == NULL)
 		{
 			printf("Could not create %u%s window: %s\n", i + 1,
-					i == 0?"st":i == 1?"nd":i == 2?"rd":"th", /* Assuming you have less than 20 graphics cards ;) */
+					i == 0?"st":i == 1?"nd":i == 2?"rd":"th", /* Assuming you have fewer than 20 graphics cards ;) */
 					SDL_GetError());
 			goto exit_bad_window;
 		}

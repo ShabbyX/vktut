@@ -102,8 +102,8 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			return;
 		}
 
-		present_queue[i] = devs[i].command_pools[presentable_queues[i]].queues[0];
-		cmd_buffer[i] = devs[i].command_pools[presentable_queues[i]].buffers[0];
+		present_queue[i] = devs[i].command_pools[presentable_queues[0]].queues[0];
+		cmd_buffer[i] = devs[i].command_pools[presentable_queues[0]].buffers[0];
 		free(presentable_queues);
 	}
 
@@ -475,7 +475,7 @@ int main(int argc, char **argv)
 	/* Get logical devices and enable WSI extensions */
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
-		res = tut6_setup(&phy_devs[i], &devs[i], VK_QUEUE_COMPUTE_BIT);
+		res = tut6_setup(&phy_devs[i], &devs[i], VK_QUEUE_GRAPHICS_BIT);
 		if (res < 0)
 		{
 			printf("Could not setup logical device %u, command pools and queues: %s\n", i, tut1_VkResult_string(res));
