@@ -55,37 +55,21 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 	uint8_t color = 0;
 
 	/* Like in Tutorial 6, take the list of swapchain images for future */
-	uint32_t image_count[dev_count];
-	uint32_t max_image_count = 1;
+	VkImage *images[dev_count];
+
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
-		uint32_t count = 0;
-		res = vkGetSwapchainImagesKHR(devs[i].device, swapchains[i].swapchain, &count, NULL);
-		if (res < 0)
+		images[i] = tut6_get_swapchain_images(&devs[i], &swapchains[i], NULL);
+		if (images[i] == NULL)
 		{
-			printf("Failed to count the number of images in swapchain of device %u: %s\n", i, tut1_VkResult_string(res));
-			return;
-		}
-
-		image_count[i] = count;
-		if (count > max_image_count)
-			max_image_count = count;
-	}
-
-	VkImage images[dev_count][max_image_count];
-	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		res = vkGetSwapchainImagesKHR(devs[i].device, swapchains[i].swapchain, &image_count[i], images[i]);
-		if (res < 0)
-		{
-			printf("Failed to get the images in swapchain of device %u: %s\n", i, tut1_VkResult_string(res));
+			printf("-- failed for device %u\n", i);
 			return;
 		}
 	}
 
 	/*
-	 * Take the first queue out of each presentable queue family (and command buffer on it) to use for presentation
-	 * (for now)
+	 * Take the first queue out of the first presentable queue family (and command buffer on it) to use for
+	 * presentation (for now)
 	 */
 	VkQueue present_queue[dev_count];
 	VkCommandBuffer cmd_buffer[dev_count];
@@ -442,6 +426,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 	{
 		vkDestroySemaphore(devs[i].device, sem_post_acquire[i], NULL);
 		vkDestroySemaphore(devs[i].device, sem_pre_submit[i], NULL);
+		free(images[i]);
 	}
 }
 

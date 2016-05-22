@@ -119,4 +119,6 @@ void tut6_free_swapchain(VkInstance vk, struct tut2_device *dev, struct tut6_swa
 
 void tut6_print_surface_capabilities(struct tut6_swapchain *swapchain);
 
+VkImage *tut6_get_swapchain_images(struct tut2_device *dev, struct tut6_swapchain *swapchain, uint32_t *count);
+
 #endif

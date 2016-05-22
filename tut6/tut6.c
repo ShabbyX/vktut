@@ -424,3 +424,38 @@ void tut6_print_surface_capabilities(struct tut6_swapchain *swapchain)
 		else
 			printf("    * %s\n", present_modes[swapchain->present_modes[i]]);
 }
+
+VkImage *tut6_get_swapchain_images(struct tut2_device *dev, struct tut6_swapchain *swapchain, uint32_t *count)
+{
+	VkResult res;
+
+	/*
+	 * The `vkGetSwapchainImagesKHR` function is used to retrieve the swapchain images.  If the image array is
+	 * given as NULL, only the count is returned, which we first use determine the size of the required array.
+	 */
+	uint32_t image_count;
+	res = vkGetSwapchainImagesKHR(dev->device, swapchain->swapchain, &image_count, NULL);
+	if (res < 0)
+	{
+		printf("Failed to count the number of images in swapchain: %s\n", tut1_VkResult_string(res));
+		return NULL;
+	}
+
+	VkImage *images = malloc(image_count * sizeof *images);
+	if (images == NULL)
+	{
+		printf("Out of memory\n");
+		return NULL;
+	}
+
+	res = vkGetSwapchainImagesKHR(dev->device, swapchain->swapchain, &image_count, images);
+	if (res < 0)
+	{
+		printf("Failed to get the images in swapchain: %s\n", tut1_VkResult_string(res));
+		return NULL;
+	}
+
+	if (count)
+		*count = image_count;
+	return images;
+}

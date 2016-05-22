@@ -61,34 +61,16 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 
 	/*
 	 * At first, we need to get a reference to all the images of the swapchains, so that later when we acquire or
-	 * queue them, we would be working with indices only.  The `vkGetSwapchainImagesKHR` function is used to
-	 * retrieve the images.  If the image array is given as NULL, only the count is returned, which we first use
-	 * determine the size of the required array.
+	 * queue them, we would be working with indices only.
 	 */
-	uint32_t image_count[dev_count];
-	uint32_t max_image_count = 1;
+	VkImage *images[dev_count];
+
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
-		uint32_t count = 0;
-		res = vkGetSwapchainImagesKHR(devs[i].device, swapchains[i].swapchain, &count, NULL);
-		if (res < 0)
+		images[i] = tut6_get_swapchain_images(&devs[i], &swapchains[i], NULL);
+		if (images[i] == NULL)
 		{
-			printf("Failed to count the number of images in swapchain of device %u: %s\n", i, tut1_VkResult_string(res));
-			return;
-		}
-
-		image_count[i] = count;
-		if (count > max_image_count)
-			max_image_count = count;
-	}
-
-	VkImage images[dev_count][max_image_count];
-	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		res = vkGetSwapchainImagesKHR(devs[i].device, swapchains[i].swapchain, &image_count[i], images[i]);
-		if (res < 0)
-		{
-			printf("Failed to get the images in swapchain of device %u: %s\n", i, tut1_VkResult_string(res));
+			printf("-- failed for device %u\n", i);
 			return;
 		}
 	}
@@ -243,9 +225,12 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			}
 		}
 
-		/* Make sure we don't end up busing looping in the GPU */
+		/* Make sure we don't end up busy looping in the GPU */
 		usleep(10000);
 	}
+
+	for (uint32_t i = 0; i < dev_count; ++i)
+		free(images[i]);
 }
 
 int main(int argc, char **argv)
