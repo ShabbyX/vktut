@@ -116,6 +116,23 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		}
 	}
 
+	VkFence fence[dev_count];
+	bool first_render = true;
+
+	for (uint32_t i = 0; i < dev_count; ++i)
+	{
+		VkFenceCreateInfo fence_info = {
+			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		};
+
+		res = vkCreateFence(devs[0].device, &fence_info, NULL, &fence[i]);
+		if (res)
+		{
+			printf("Failed to create fence: %s\n", tut1_VkResult_string(res));
+			return;
+		}
+	}
+
 	/* Process events from SDL and render.  If process_events returns non-zero, it signals application exit. */
 	while (process_events() == 0)
 	{
@@ -147,32 +164,42 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			 * measurable time, but the setup and finish times of each call, especially because we are
 			 * interacting with the GPU.
 			 *
-			 * Another way is to provide the work early, and synchronize acquire and present with
-			 * semaphores.  This could be done in different ways depending on how everything is managed,
-			 * but here is a simple example:
+			 * Vulkan is made for parallelism and efficiency, so naturally it's not stupid in this regard!
+			 * There are different ways to do the above in parallel, and synchronize them.  One nice thing
+			 * is that command buffers can call other secondary command buffers.  So, while a small part of
+			 * the command buffer requires knowledge of which presentable image it is working with, the
+			 * majority of it doesn't, so they could be pre-recorded or recorded in parallel by other
+			 * threads.  Another nice thing is that many of the functions work asynchronously, such as
+			 * submission to queue for rendering.  This allows the CPU to go ahead with executing the rest
+			 * of the above algorithm, only wait for the GPU to finish rendering when it has to, and let
+			 * synchronization mechanisms take care of handling the flow of execution in the back.
 			 *
-			 * - create a command buffer with 1) first transition, 2) render, 3) third transition
-			 * - submit the command buffer with a semaphore waiting in the beginning and a semaphore
-			 *   signalling the end
-			 * - acquire from swapchain, signalling the first semaphore
+			 * One could imagine different ways of doing things, but here is a simple example:
+			 *
+			 * - acquire from swapchain, signalling semaphore A
+			 * - wait on fence C (for previous frame to finish)
+			 * - create a command buffer with 1) first transition, 2) render, 3) second transition
+			 * - submit the command buffer with semaphore A waiting in the beginning and semaphore B
+			 *   signalling the end, with fence C signalling the end as well
 			 * - present to swapchain, waiting on the second semaphore
 			 *
-			 * This way, the process of sending the command buffer to the queue is done in parallel to
-			 * waiting for a swapchain image to become available.  More importantly, when we actually do
-			 * render, all stages of the pipeline except fragment shader can actually execute without
-			 * having to first wait for a swapchain image to be acquired.  Depending on the situation, this
-			 * could significantly cut down on latencies.
+			 * The significance of the fence above is the following.  In Tutorial 6, we used `usleep` to
+			 * avoid busy looping.  That was bad, because it put a hard limit and the frame rate.  The
+			 * issue is not just busy looping though.  Since the submission to queues happen
+			 * asynchronously, we risk submitting work faster than the card can actually perform them, with
+			 * the result being that frames we send now are rendered much later, after all our previous
+			 * work is finished.  This delay can easily become unacceptable; imagine a player has hit the
+			 * key to move forwards, you detect this and generate the next frame accordingly, but the
+			 * player doesn't actually see her character move forward for several frames.
 			 *
-			 * We could be using this scheme here.  While we're rebuilding the command buffer here every
-			 * time, one could (and most of the times should) also pre-build command buffers and just
-			 * replay them here (and likely with different parameters).  We'll do that in a future Tutorial.
-			 *
-			 * There is only one complication here though.  The command buffer that does the transitioning
-			 * needs to know which image it is transitioning, which is known only after acquiring it from
-			 * the swapchain!  As of yet, I don't know how to overcome this issue, but the above method is
-			 * such an obvious gain that I'm either going to find out how to do it, or ask Khronos to make
-			 * it possible!  So while that happens, we can just put the acquire part of the above algorithm
-			 * first.
+			 * The location of the fence is chosen as such, to allow maximum overlap between GPU and CPU
+			 * work.  In this case, while the GPU is still rendering, the CPU can wait for the swapchain
+			 * image to be acquired.  As a matter of fact, the wait on the fence could be performed even
+			 * later (still before the next submit, of course), as long as the "render" part doesn't change
+			 * the data the previous frame was using to render.  For example, if the "render" part sets the
+			 * "transformation matrix" for the vertex shader, the wait on the fence can be delayed until
+			 * that point.  It cannot be delayed further though, as updating the "transformation matrix"
+			 * while the previous frame is still using it is naturally incorrect.
 			 */
 
 			/* Use `vkAcquireNextImageKHR` to get an image to render to */
@@ -191,6 +218,24 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			{
 				printf("Couldn't acquire image: %s\n", tut1_VkResult_string(res));
 				return;
+			}
+
+			/*
+			 * Unless the first time we are rendering, wait for the last frame to finish rendering.  Let's
+			 * wait up to a second, and if the fence is still not signalled, we'll assume something went
+			 * horribly wrong and quit.
+			 *
+			 * Since in this tutorial we are not actually sending any data to the GPU to be used for
+			 * rendering, this wait could have been delayed all the way to just before the next submission.
+			 */
+			if (!first_render)
+			{
+				res = vkWaitForFences(devs[i].device, 1, &fence[i], true, 1000000000);
+				if (res)
+				{
+					printf("Wait for fence failed: %s\n", tut1_VkResult_string(res));
+					return;
+				}
 			}
 
 			/*
@@ -382,9 +427,6 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			 * calculations before the stage where it really needs to wait for the semaphore.  Since we
 			 * don't have a pipeline yet, we'll ask it to wait at the top of the pipeline.
 			 *
-			 * Unlike in Tutorial 4, we don't need a fence to signal the end of execution anymore, because
-			 * the semaphores take care of all the synchronization we needed.
-			 *
 			 * Side note: we didn't need to submit the command buffer to the same queue we use for
 			 * presentation, or even a queue in the same family, but we do that now for simplicity.
 			 */
@@ -399,7 +441,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 				.signalSemaphoreCount = 1,
 				.pSignalSemaphores = &sem_pre_submit[i],
 			};
-			vkQueueSubmit(present_queue[i], 1, &submit_info, NULL);
+			vkQueueSubmit(present_queue[i], 1, &submit_info, fence[i]);
 
 			/* Use `vkQueuePresentKHR` to give the image back for presentation */
 			VkPresentInfoKHR present_info = {
@@ -418,14 +460,14 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			}
 		}
 
-		/* Make sure we don't end up busing looping in the GPU */
-		usleep(10000);
+		first_render = false;
 	}
 
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		vkDestroySemaphore(devs[i].device, sem_post_acquire[i], NULL);
 		vkDestroySemaphore(devs[i].device, sem_pre_submit[i], NULL);
+		vkDestroyFence(devs[i].device, fence[i], NULL);
 		free(images[i]);
 	}
 }
