@@ -133,7 +133,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		{
 			/*
 			 * To render to an image and present it on the screen, the following sequence of operations
-			 * need to be done:
+			 * needs to be done:
 			 *
 			 * - acquire from swapchain
 			 * - transition to color attachment optimal

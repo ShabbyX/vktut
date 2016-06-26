@@ -134,7 +134,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		 * and the presentation engine.
 		 *
 		 * At first, all buffers (images) are owned by the swapchain (presentation engine).  We ask for an
-		 * image, render into it, and return it.  In a multi-threaded application, you would ask for images as
+		 * image, render into it, and return it.  In a multi-threaded application, you could ask for images as
 		 * soon as you can get them, render to them and queue them in parallel.  The function that "acquires"
 		 * an image can signal a fence and/or a semaphore after acquiring an image.  This is very helpful with
 		 * respect to parallelism, because the command buffer being executed can wait for the signal when it
@@ -225,7 +225,12 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			}
 		}
 
-		/* Make sure we don't end up busy looping in the GPU */
+		/*
+		 * Make sure we don't end up busy looping.  Feel free to remove this and see what happens.  In the next
+		 * Tutorial we will see what can be done instead of sleeping.
+		 *
+		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, removing this caused the whole UI to become very sluggish.
+		 */
 		usleep(10000);
 	}
 
@@ -277,7 +282,7 @@ int main(int argc, char **argv)
 
 	/*
 	 * We need to setup SDL now so that we can create a surface and a swapchain over it.  We will do this for each
-	 * device, just for example, but in reality you probably just want to have one screen!  The way this tutorial
+	 * device, just for example, but in reality you probably just want to have one windows!  The way this tutorial
 	 * is done, is like running two separate applications one based on each of your graphics cards.  In real
 	 * applications one might want to use the other graphics cards for additional rendering, transfer it back to
 	 * the main graphics card and do the final rendering using that.

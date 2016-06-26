@@ -95,14 +95,14 @@ VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_devi
 }
 
 VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
-		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count)
+		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count, bool allow_no_vsync)
 {
 	/*
 	 * Now let's get to the interesting part.  We have our extensions enabled, so first, we need to get a surface.
 	 * For that, we need to have a connection to the display manager.  This is platform-specific, and we can get
 	 * the required information from SDL.  For now, we are going to use XCB, but someone might want to add support
-	 * for others such as wayland etc.  The platform-specific is very short though, SDL is taking care of almost
-	 * everything.
+	 * for others such as wayland etc.  The platform-specific part is very short though, SDL is taking care of
+	 * almost everything.
 	 */
 	SDL_SysWMinfo wm;
 	VkResult retval;
@@ -124,7 +124,7 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 
 	/*
 	 * To create a surface, we should provide a surface info that is dependent on the window system.  The
-	 * information given is the usual structure type, and flags of other *Info structs, and a few platform-specific
+	 * information given is the usual structure type, flags like other *Info structs, and a few platform-specific
 	 * parameters, often regarding the connection to the window system and the window the surface is being placed
 	 * on.
 	 *
@@ -178,7 +178,7 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 * of buffers is low, specifically compared to the number of rendering threads, then the threads would have to
 	 * be blocked (by vkAcquireNextImageKHR) until a buffer is available to render to.  One buffer is always owned
 	 * by the swapchain at any time (the one currently being presented on the surface), and depending on the
-	 * implemenation one or more buffers may be also need to be owned by the swapchain.
+	 * implemenation one or more buffers may be also needed to be owned by the swapchain.
 	 *
 	 * The surface capabilities queried above gives us minImageCount which tells how many buffers the swapchain
 	 * would at least need.  maxImageCount would give us the upper limit (or 0 if infinite).  If there are N
