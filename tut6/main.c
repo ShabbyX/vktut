@@ -249,6 +249,19 @@ int main(int argc, char **argv)
 	SDL_Window *windows[MAX_DEVICES] = {NULL};
 	uint32_t dev_count = MAX_DEVICES;
 
+	bool no_vsync = false;
+
+	for (int i = 1; i < argc; ++i)
+	{
+		if (strcmp(argv[1], "--help") == 0)
+		{
+			printf("Usage: %s [--no-vsync]\n\n", argv[0]);
+			return 0;
+		}
+		if (strcmp(argv[1], "--no-vsync") == 0)
+			no_vsync = true;
+	}
+
 	/* Fire up Vulkan */
 	res = tut6_init(&vk);
 	if (res)
@@ -315,7 +328,7 @@ int main(int argc, char **argv)
 		 * of rendering threads.  For now, let's not bother with threads and just use 1 thread (the current
 		 * one).
 		 */
-		res = tut6_get_swapchain(vk, &phy_devs[i], &devs[i], &swapchains[i], windows[i], 1);
+		res = tut6_get_swapchain(vk, &phy_devs[i], &devs[i], &swapchains[i], windows[i], 1, no_vsync);
 		if (res)
 		{
 			printf("Could not create surface and swapchain for device %u: %s\n", i, tut1_VkResult_string(res));

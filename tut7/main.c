@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include "tut7.h"
 
 #define MAX_DEVICES 2
@@ -133,9 +134,26 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		}
 	}
 
+	unsigned int frames = 0;
+	time_t before = time(NULL);
+
 	/* Process events from SDL and render.  If process_events returns non-zero, it signals application exit. */
 	while (process_events() == 0)
 	{
+		/*
+		 * A simple imprecise FPS calculator.  Try the --no-vsync option to this program to see the difference.
+		 *
+		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, --no-vsync got me about 10000 FPS.
+		 */
+		time_t now = time(NULL);
+		if (now != before)
+		{
+			printf("%lds: %u frames\n", now - before, frames);
+			frames = 0;
+			before = now;
+		}
+		++frames;
+
 		/*
 		 * We are not yet ready to actually render something.  For that, we would need descriptor sets and
 		 * pipelines, but we'll get to that soon.  In tut7.c, we have a repository of functions to create
@@ -483,6 +501,19 @@ int main(int argc, char **argv)
 	SDL_Window *windows[MAX_DEVICES] = {NULL};
 	uint32_t dev_count = MAX_DEVICES;
 
+	bool no_vsync = false;
+
+	for (int i = 1; i < argc; ++i)
+	{
+		if (strcmp(argv[1], "--help") == 0)
+		{
+			printf("Usage: %s [--no-vsync]\n\n", argv[0]);
+			return 0;
+		}
+		if (strcmp(argv[1], "--no-vsync") == 0)
+			no_vsync = true;
+	}
+
 	/* Fire up Vulkan */
 	res = tut6_init(&vk);
 	if (res)
@@ -533,7 +564,7 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		/* Let's still not bother with threads and use just 1 (the current thread) */
-		res = tut6_get_swapchain(vk, &phy_devs[i], &devs[i], &swapchains[i], windows[i], 1);
+		res = tut6_get_swapchain(vk, &phy_devs[i], &devs[i], &swapchains[i], windows[i], 1, no_vsync);
 		if (res)
 		{
 			printf("Could not create surface and swapchain for device %u: %s\n", i, tut1_VkResult_string(res));

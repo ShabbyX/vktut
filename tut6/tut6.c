@@ -234,14 +234,15 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 *
 	 * - FIFO: There is wait for VBLANK and no tearing is possible.  A queue is used that can hold as many
 	 *   submissions as the application can (so no overflow is possible) and the images are presented one by one.
-	 *   This mode guaranteed to be supported.
+	 *   This mode is guaranteed to be supported.
 	 *
 	 * - Relaxed FIFO: This is similar to FIFO, with the exception that if there is no image to replace the current
 	 *   one on the next VBLANK, then the next submission would be immediately drawn, which can result in tearing.
 	 *   This mode has lower latency than FIFO at the risk of tearing.
 	 *
 	 * We would go with Mailbox if available and fall back to FIFO if not, to make sure there is no tearing either
-	 * way.
+	 * way.  If `allow_no_vsync` was given, we would try Immediate mode instead, and fallback to FIFO if not
+	 * available.
 	 */
 	swapchain->present_modes_count = TUT6_MAX_PRESENT_MODES;
 	VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -251,11 +252,18 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	if (retval >= 0)
 	{
 		for (uint32_t i = 0; i < swapchain->present_modes_count; ++i)
-			if (swapchain->present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+		{
+			if (allow_no_vsync && swapchain->present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+			{
+				present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+				break;
+			}
+			if (!allow_no_vsync && swapchain->present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
 			{
 				present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
 				break;
 			}
+		}
 	}
 
 	/*

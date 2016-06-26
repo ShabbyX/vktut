@@ -114,7 +114,7 @@ static inline VkResult tut6_setup(struct tut1_physical_device *phy_dev, struct t
 }
 
 VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
-		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count);
+		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count, bool allow_no_vsync);
 void tut6_free_swapchain(VkInstance vk, struct tut2_device *dev, struct tut6_swapchain *swapchain);
 
 void tut6_print_surface_capabilities(struct tut6_swapchain *swapchain);
