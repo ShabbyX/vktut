@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "tut7.h"
+#include "tut7_render.h"
 
 #define MAX_DEVICES 2
 
@@ -52,84 +53,16 @@ static int process_events()
 
 static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_devs, struct tut2_device *devs, struct tut6_swapchain *swapchains)
 {
-	VkResult res;
-	uint8_t color = 0;
+	int res;
+	struct tut7_render_essentials essentials[dev_count];
 
-	/* Like in Tutorial 6, take the list of swapchain images for future */
-	VkImage *images[dev_count];
-
+	/* Allocate render essentials.  See this function in tut7_render.c for explanations */
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
-		images[i] = tut6_get_swapchain_images(&devs[i], &swapchains[i], NULL);
-		if (images[i] == NULL)
+		res = tut7_render_get_essentials(&essentials[i], &phy_devs[i], &devs[i], &swapchains[i]);
+		if (res)
 		{
 			printf("-- failed for device %u\n", i);
-			return;
-		}
-	}
-
-	/*
-	 * Take the first queue out of the first presentable queue family (and command buffer on it) to use for
-	 * presentation (for now)
-	 */
-	VkQueue present_queue[dev_count];
-	VkCommandBuffer cmd_buffer[dev_count];
-
-	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		uint32_t *presentable_queues = NULL;
-		uint32_t presentable_queue_count = 0;
-
-		if (tut7_get_presentable_queues(&phy_devs[i], &devs[i], swapchains[i].surface,
-					&presentable_queues, &presentable_queue_count) || presentable_queue_count == 0)
-		{
-			printf("No presentable queue families!  What kind of graphics card is this!\n");
-			return;
-		}
-
-		present_queue[i] = devs[i].command_pools[presentable_queues[0]].queues[0];
-		cmd_buffer[i] = devs[i].command_pools[presentable_queues[0]].buffers[0];
-		free(presentable_queues);
-	}
-
-	/* Create semaphores for synchronization (details below) */
-	VkSemaphore sem_post_acquire[dev_count];
-	VkSemaphore sem_pre_submit[dev_count];
-
-	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		VkSemaphoreCreateInfo sem_info = {
-			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-		};
-
-		res = vkCreateSemaphore(devs[i].device, &sem_info, NULL, &sem_post_acquire[i]);
-		if (res)
-		{
-			printf("Failed to create post-acquire semaphore: %s\n", tut1_VkResult_string(res));
-			return;
-		}
-
-		res = vkCreateSemaphore(devs[i].device, &sem_info, NULL, &sem_pre_submit[i]);
-		if (res)
-		{
-			printf("Failed to create pre-submit semaphore: %s\n", tut1_VkResult_string(res));
-			return;
-		}
-	}
-
-	VkFence fence[dev_count];
-	bool first_render = true;
-
-	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		VkFenceCreateInfo fence_info = {
-			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-		};
-
-		res = vkCreateFence(devs[0].device, &fence_info, NULL, &fence[i]);
-		if (res)
-		{
-			printf("Failed to create fence: %s\n", tut1_VkResult_string(res));
 			return;
 		}
 	}
@@ -137,13 +70,15 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 	unsigned int frames = 0;
 	time_t before = time(NULL);
 
+	uint8_t color = 0;
+
 	/* Process events from SDL and render.  If process_events returns non-zero, it signals application exit. */
 	while (process_events() == 0)
 	{
 		/*
 		 * A simple imprecise FPS calculator.  Try the --no-vsync option to this program to see the difference.
 		 *
-		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, --no-vsync got me about 10000 FPS.
+		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, --no-vsync got me about 12000 FPS.
 		 */
 		time_t now = time(NULL);
 		if (now != before)
@@ -166,6 +101,8 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 
 		for (uint32_t i = 0; i < dev_count; ++i)
 		{
+			uint32_t image_index;
+
 			/*
 			 * To render to an image and present it on the screen, the following sequence of operations
 			 * needs to be done:
@@ -220,161 +157,16 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			 * while the previous frame is still using it is naturally incorrect.
 			 */
 
-			/* Use `vkAcquireNextImageKHR` to get an image to render to */
-			uint32_t image_index;
-
-			res = vkAcquireNextImageKHR(devs[i].device, swapchains[i].swapchain, 1000000000, sem_post_acquire[i], NULL, &image_index);
-			if (res == VK_TIMEOUT)
-			{
-				printf("A whole second and no image.  I give up.\n");
-				return;
-			}
-			else if (res == VK_SUBOPTIMAL_KHR)
-				printf("Did you change the window size?  I didn't recreate the swapchains,\n"
-					"so the presentation is now suboptimal.\n");
-			else if (res < 0)
-			{
-				printf("Couldn't acquire image: %s\n", tut1_VkResult_string(res));
-				return;
-			}
-
-			/*
-			 * Unless the first time we are rendering, wait for the last frame to finish rendering.  Let's
-			 * wait up to a second, and if the fence is still not signalled, we'll assume something went
-			 * horribly wrong and quit.
-			 *
-			 * Since in this tutorial we are not actually sending any data to the GPU to be used for
-			 * rendering, this wait could have been delayed all the way to just before the next submission.
-			 */
-			if (!first_render)
-			{
-				res = vkWaitForFences(devs[i].device, 1, &fence[i], true, 1000000000);
-				if (res)
-				{
-					printf("Wait for fence failed: %s\n", tut1_VkResult_string(res));
-					return;
-				}
-			}
-
-			/*
-			 * We have seen many of the command buffer functions in Tutorial 4.  Here is a short recap:
-			 *
-			 * - reset: remove all previous recordings from the command buffer
-			 * - begin: start recording
-			 * - bind pipeline: specify the pipeline the commands run on (unused here)
-			 * - bind descriptor set: specify resources to use for rendering (unused here)
-			 * - end: stop recording
-			 */
-			vkResetCommandBuffer(cmd_buffer[i], 0);
-			VkCommandBufferBeginInfo begin_info = {
-				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-				.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-			};
-			res = vkBeginCommandBuffer(cmd_buffer[i], &begin_info);
+			/* See this function in tut7_render.c for explanations */
+			res = tut7_render_start(&essentials[i], &devs[i], &swapchains[i], VK_IMAGE_LAYOUT_GENERAL, &image_index);
 			if (res)
 			{
-				printf("Couldn't even begin recording a command buffer: %s\n", tut1_VkResult_string(res));
+				printf("-- failed for device %u\n", i);
 				return;
 			}
 
 			/*
-			 * To transition an image to a new layout, an image barrier is used.  Before we see how that is
-			 * done, let's see what it even means.
-			 *
-			 * In Vulkan, there are barriers on different kinds of resources (images, buffers and memory)
-			 * and other means to specify execution dependency.  In each case, you want to make sure some
-			 * actions A are all executed before some actions B.  In the specific case of barriers, A could
-			 * be actions that do something to the resource and B could be actions that need the result of
-			 * those actions.
-			 *
-			 * In our specific case, we want to change the layout of a swapchain image.  For the transition
-			 * from present src, we want to make sure that all writes to the image are done after the
-			 * transition is done.  For the transition to present src, we want to make sure that all writes
-			 * to the image are done before the transition is done.  Note: if we had a graphics pipeline,
-			 * we would be talking about "color attachment writes" instead of just "writes".  Keep that in
-			 * mind.
-			 *
-			 * Using a VkImageMemoryBarrier, we are not only specifying how the image layout should change
-			 * (if changed at all), but also defining the actions A and B where an execution dependency
-			 * would be created.  In the first barrier (transition from present src), all reads of the
-			 * image (for previous presentation) must happen before the barrier (A is the set of READ
-			 * operations), and all writes must be done after the barrier (B is the set of WRITE
-			 * operations).  The situation is reversed with the second barrier (transition to present src).
-			 *
-			 * In Vulkan, actions A are referred to as `src` and actions B are referred to as `dst`.
-			 *
-			 * Using an image barrier, it's also possible to transfer one image from a queue family to
-			 * another, in which case A is the set of actions accessing the image in the first queue family
-			 * and B is the set of actions accessing the image in the second queue family.  We are not
-			 * moving between queue families, so we'll specify this intention as well.
-			 *
-			 * In our layout transition, we are transitioning from present src to general and back.
-			 * However, the first time the transition happens, the swapchain image layout is actually
-			 * UNDEFINED.  Either way, since we are not interested in what was previously in the image when
-			 * we are just about to render into it, we can set the `oldLayout` (the layout transitioning
-			 * from) to UNDEFINED.  This makes the transition more efficient because Vulkan knows it can
-			 * just throw away the contents of the image.  Note: if we had a graphics pipeline, we would be
-			 * transition to the "color attachment optimal" layout instead of "general".
-			 *
-			 * Finally, we need to specify which part of the image (subresource) is being transitioned.  We
-			 * want to transition COLOR parts of the image (which in this case, all of the image is COLOR),
-			 * and all mip levels and arrays (which are both in this case single).
-			 */
-			VkImageMemoryBarrier image_barrier = {
-				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-				.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-				.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
-				.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-				.newLayout = VK_IMAGE_LAYOUT_GENERAL,
-				.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-				.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-				.image = images[i][image_index],
-				.subresourceRange = {
-					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-					.baseMipLevel = 0,
-					.levelCount = 1,
-					.baseArrayLayer = 0,
-					.layerCount = 1,
-				},
-			};
-
-			/*
-			 * The image barrier structure above defines the execution dependency of sets of actions A and
-			 * B.  When applying the barrier, we also need to specify which pipeline stages these sets of
-			 * actions are taken from.
-			 *
-			 * In our barrier, first we want to make sure all READs from the image (by the previous
-			 * presentation) is done before the barrier.  These reads are not part of our rendering.  In
-			 * fact, they are really done before the graphics pipeline even begins.  So the pipeline stage
-			 * we specify for `src` would be the top of the pipeline, which means before the pipeline
-			 * begins.  Second, we want to make sure all writes to the image (for rendering) is done after
-			 * the barrier.  The writes to the image are likely to happen at later stages of the graphics
-			 * pipeline, so we can specify those stages as `dst` stages of the barrier.  We have already
-			 * specified that the barrier works on WRITEs, so we can also be a bit lazy and say that the
-			 * `dst` stage is all graphics pipeline stages.
-			 *
-			 * Let's rephrase the above to make sure it's clear.  The vkCmdPipelineBarrier takes a src and
-			 * dst stage mask.  The arguments are called srcStageMask and dstStageMask.  They can contain
-			 * more than one pipeline stage.  Take the combinations (srcAccessMask, srcStageMask) and
-			 * (dstAccessMask, dstStageMask).  Say we make a barrier from (A, Sa) to (B, Sb) as src and dst
-			 * parts of the barrier respectively.  The barrier then means that all actions A in stages Sa
-			 * are done before all actions B in stages Sb.  So, if Sb is all graphics stages, it means that
-			 * all actions A in stages Sa are done before all actions B anywhere.  If Sa is top of the
-			 * pipeline, it means that all actions A before the pipeline are done before all actions B
-			 * anywhere.
-			 *
-			 * All READs before the pipeline must be done before all WRITEs anywhere.
-			 */
-			vkCmdPipelineBarrier(cmd_buffer[i],
-					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-					VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-					0,			/* no flags */
-					0, NULL,		/* no memory barriers */
-					0, NULL,		/* no buffer barriers */
-					1, &image_barrier);	/* our image transition */
-
-			/*
-			 * We did all this, just to clear the image.  Like I said, it's possible to clear an image
+			 * We did everything just to clear the image.  Like I said, it's possible to clear an image
 			 * outside a pipeline.  It is also possible to clear it inside a pipeline, so fear not!  When
 			 * we have a graphics pipeline, we can transition the image directly to "color attachment
 			 * optimal" and clear it, and we don't have to first transition to "general" and then
@@ -409,85 +201,20 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 				.float32 = {color, (color + 64) % 256 / 255.0f, (color + 128) % 256 / 255.0f, 1},
 			};
 			++color;
-			vkCmdClearColorImage(cmd_buffer[i], images[i][image_index], VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_subresource_range);
+			vkCmdClearColorImage(essentials[i].cmd_buffer, essentials[i].images[image_index], VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_subresource_range);
 
-			/* Invert the memory barrier for the second transition */
-			image_barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			image_barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			image_barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-			image_barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-			/*
-			 * For the second barrier, we want the opposite of the first barrier.  We want to make sure
-			 * image reads by the presentation engine are done after the image is written to during
-			 * rendering.  Just as top of the pipeline means before the pipeline begins, bottom of the
-			 * pipeline means after it ends.
-			 *
-			 * With the explanation on the previous barrier, this should already makes sense to you:
-			 *
-			 * All WRITEs anywhere must be done before all READs after the pipeline.
-			 */
-			vkCmdPipelineBarrier(cmd_buffer[i],
-					VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-					VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-					0,			/* no flags */
-					0, NULL,		/* no memory barriers */
-					0, NULL,		/* no buffer barriers */
-					1, &image_barrier);	/* our image transition */
-
-			vkEndCommandBuffer(cmd_buffer[i]);
-
-			/*
-			 * Having built the command buffer, we are ready to submit it to a queue for presentation.
-			 * We wanted our submission to wait for the image acquisition semaphore and subsequently signal
-			 * the presentation semaphore, so we'll simply specify exactly that.  The semaphore wait can be
-			 * done at different stages of the pipeline, so that the pipeline could go ahead with its
-			 * calculations before the stage where it really needs to wait for the semaphore.  Since we
-			 * don't have a pipeline yet, we'll ask it to wait at the top of the pipeline.
-			 *
-			 * Side note: we didn't need to submit the command buffer to the same queue we use for
-			 * presentation, or even a queue in the same family, but we do that now for simplicity.
-			 */
-			VkPipelineStageFlags wait_sem_stages[1] = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-			VkSubmitInfo submit_info = {
-				.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-				.waitSemaphoreCount = 1,
-				.pWaitSemaphores = &sem_post_acquire[i],
-				.pWaitDstStageMask = wait_sem_stages,
-				.commandBufferCount = 1,
-				.pCommandBuffers = &cmd_buffer[i],
-				.signalSemaphoreCount = 1,
-				.pSignalSemaphores = &sem_pre_submit[i],
-			};
-			vkQueueSubmit(present_queue[i], 1, &submit_info, fence[i]);
-
-			/* Use `vkQueuePresentKHR` to give the image back for presentation */
-			VkPresentInfoKHR present_info = {
-				.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-				.waitSemaphoreCount = 1,
-				.pWaitSemaphores = &sem_pre_submit[i],
-				.swapchainCount = 1,
-				.pSwapchains = &swapchains[i].swapchain,
-				.pImageIndices = &image_index,
-			};
-			res = vkQueuePresentKHR(present_queue[i], &present_info);
-			if (res < 0)
+			/* See this function in tut7_render.c for explanations */
+			res = tut7_render_finish(&essentials[i], &devs[i], &swapchains[i], VK_IMAGE_LAYOUT_GENERAL, image_index);
+			if (res)
 			{
-				printf("Failed to queue image for presentation on device %u\n", i);
+				printf("-- failed for device %u\n", i);
 				return;
 			}
 		}
-
-		first_render = false;
 	}
 
 	for (uint32_t i = 0; i < dev_count; ++i)
-	{
-		vkDestroySemaphore(devs[i].device, sem_post_acquire[i], NULL);
-		vkDestroySemaphore(devs[i].device, sem_pre_submit[i], NULL);
-		vkDestroyFence(devs[i].device, fence[i], NULL);
-		free(images[i]);
-	}
+		tut7_render_cleanup_essentials(&essentials[i], &devs[i]);
 }
 
 int main(int argc, char **argv)
