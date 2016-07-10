@@ -25,6 +25,7 @@
 struct tut7_render_essentials
 {
 	VkImage *images;		/* Images from the swapchain */
+	uint32_t image_count;		/* Number of `images` */
 	VkQueue present_queue;		/* The queue to present to */
 	VkCommandBuffer cmd_buffer;	/* The command buffer to render to */
 

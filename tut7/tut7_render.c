@@ -25,7 +25,7 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 	VkResult res;
 
 	/* Like in Tutorial 6, take the list of swapchain images for future */
-	essentials->images = tut6_get_swapchain_images(dev, swapchain, NULL);
+	essentials->images = tut6_get_swapchain_images(dev, swapchain, &essentials->image_count);
 	if (essentials->images == NULL)
 		return -1;
 
@@ -85,6 +85,8 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 
 void tut7_render_cleanup_essentials(struct tut7_render_essentials *essentials, struct tut2_device *dev)
 {
+	vkDeviceWaitIdle(dev->device);
+
 	vkDestroySemaphore(dev->device, essentials->sem_post_acquire, NULL);
 	vkDestroySemaphore(dev->device, essentials->sem_pre_submit, NULL);
 	vkDestroyFence(dev->device, essentials->exec_fence, NULL);

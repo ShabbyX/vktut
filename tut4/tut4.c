@@ -495,7 +495,7 @@ static void *worker_thread(void *args)
 		{
 			/*
 			 * busy loop for 32ms/thread_count, pretending that the thread is actually doing something
-			 * CPU-bound
+			 * CPU-bound.
 			 */
 			uint64_t end_time_ns = get_time_ns() + per_cmd_buffer->busy_time_ns;
 			while (get_time_ns() < end_time_ns);

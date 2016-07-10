@@ -456,7 +456,7 @@ VkResult tut7_load_shaders(struct tut2_device *dev,
 }
 
 VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
-		VkExtent2D surface_size, VkSurfaceFormatKHR surface_format,
+		VkSurfaceFormatKHR surface_format,
 		struct tut7_graphics_buffers *graphics_buffers, uint32_t graphics_buffer_count, VkRenderPass *render_pass)
 {
 	/*
@@ -670,7 +670,7 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 		 */
 		graphics_buffers[i].depth = (struct tut7_image){
 			.format = selected_format,
-			.extent = surface_size,
+			.extent = graphics_buffers[i].surface_size,
 			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 			.multisample = false,
 			.will_be_initialized = false,
@@ -694,8 +694,8 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 			.renderPass = *render_pass,
 			.attachmentCount = 2,
 			.pAttachments = framebuffer_attachments,
-			.width = surface_size.width,
-			.height = surface_size.height,
+			.width = graphics_buffers[i].surface_size.width,
+			.height = graphics_buffers[i].surface_size.height,
 			.layers = 1,
 		};
 
