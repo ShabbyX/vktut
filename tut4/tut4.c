@@ -344,7 +344,7 @@ uint32_t tut4_find_suitable_memory(struct tut1_physical_device *phy_dev, struct 
 	 */
 	for (uint32_t i = 0; i < phy_dev->memories.memoryTypeCount; ++i)
 	{
-		/* If Vulkan says this device doesn't support the object, ignore it */
+		/* If Vulkan says this type doesn't support the object, ignore it */
 		if ((mem_req->memoryTypeBits & 1 << i) == 0)
 			continue;
 

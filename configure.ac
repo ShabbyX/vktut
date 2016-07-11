@@ -37,7 +37,7 @@ AC_CHECK_HEADER([vulkan/vulkan.h], [], [AC_MSG_ERROR(Vulkan header not found)])
 AC_CHECK_LIB([vulkan], [vkCreateInstance], [], [AC_MSG_ERROR(Vulkan library not found)])
 
 # Make sure external dependencies are also installed
-# - SDL2:
+# - SDL2
 # - XCB and Xlib
 AC_CHECK_HEADER([SDL2/SDL.h], [], [AC_MSG_ERROR(SDL2 headers not found)])
 AC_CHECK_LIB([SDL2], [SDL_Init], [], [AC_MSG_ERROR(SDL2 library not found)])

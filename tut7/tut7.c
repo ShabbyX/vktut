@@ -197,12 +197,15 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 		/*
 		 * In Tutorial 4, we created a buffer, allocated memory for it and bound the memory to the buffer.
 		 * Images are glorified buffers and the process is similar.  The same argument regarding host-coherent
-		 * memory holds here as well.
+		 * memory holds here as well.  So, if the image requires device-local memory, we will look for that,
+		 * otherwise we will look for memory that is not just host-visible, but also host-coherent.
 		 */
-		VkMemoryRequirements mem_req;
+		VkMemoryRequirements mem_req = {0};
 		vkGetImageMemoryRequirements(dev->device, images[i].image, &mem_req);
 		uint32_t mem_index = tut4_find_suitable_memory(phy_dev, dev, &mem_req,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				images[i].host_visible?
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT:
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		if (mem_index >= phy_dev->memories.memoryTypeCount)
 			continue;
 
@@ -395,10 +398,12 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 		if (res)
 			continue;
 
-		VkMemoryRequirements mem_req;
+		VkMemoryRequirements mem_req = {0};
 		vkGetBufferMemoryRequirements(dev->device, buffers[i].buffer, &mem_req);
 		uint32_t mem_index = tut4_find_suitable_memory(phy_dev, dev, &mem_req,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				buffers[i].host_visible?
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT:
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		if (mem_index >= phy_dev->memories.memoryTypeCount)
 			continue;
 
@@ -665,6 +670,8 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 		 * The usage of the depth/stencil image naturally contains DEPTH_STENCIL_ATTACHMENT.  Furthermore, the
 		 * image needs to be transitioned to the depth/stencil optimal layout, so it needs TRANSFER_SRC usage
 		 * as well.
+		 *
+		 * The depth/stencil image is entirely accessed by the device, so it doesn't need to be host-visible.
 		 *
 		 * Multisampling is a feature for the color attachment and is irrelevant here.
 		 */
