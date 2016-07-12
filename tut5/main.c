@@ -76,9 +76,9 @@ int main(int argc, char **argv)
 	 * Neither during your own development, and especially nor when releasing your software/game.  Instead, you
 	 * normally look for a specific set of layers or extensions that serve your need.
 	 *
-	 * For example, VK_LAYER_LUNARG_param_checker is useful to make sure you got all the parameters to Vulkan
-	 * functions correctly.  There are many useful layers already and you can just list them in an array and
-	 * provide that to Vulkan, assuming you can tolerate some of them not existing on another computer (if you
+	 * For example, VK_LAYER_LUNARG_parameter_validation is useful to make sure you got all the parameters to
+	 * Vulkan functions correctly.  There are many useful layers already and you can just list them in an array
+	 * and provide that to Vulkan, assuming you can tolerate some of them not existing on another computer (if you
 	 * release the software).
 	 *
 	 * Vulkan has a nice way of setting itself up.  Normally, when you use Vulkan functions, they go through a
@@ -86,19 +86,19 @@ int main(int argc, char **argv)
 	 * and circumvent the loader, but the loader is nice!  One nice thing it does for you is to manage layers and
 	 * extensions.  What's even nicer is that it can be affected by environment variables.
 	 *
-	 * Before Tutorial 5, we hadn't had any layers enabled.  What if we want to enable the param_checker layer to
-	 * see if there were any mistakes in previous Tutorials?  One way is to change their code to use `tut5_setup()`
-	 * instead of `tut2_setup()` and get all layers and extensions enabled.  Another way is to use environment
-	 * variables to have the loader enable any layers we want, without the rebuilding the code.  The nice thing
-	 * about this is that you actually never need to think about layers in the code itself.  You can do without
-	 * them, and during testing just enable those layers you need from the outside.  This is not true (as far as I
-	 * can tell) about extensions; likely because the code needs to know what extensions are enabled to use them,
-	 * so it must enable them itself (if I'm wrong, please correct me).
+	 * Before Tutorial 5, we hadn't had any layers enabled.  What if we want to enable the parameter_validation
+	 * layer to see if there were any mistakes in previous Tutorials?  One way is to change their code to use
+	 * `tut5_setup()` instead of `tut2_setup()` and get all layers and extensions enabled.  Another way is to use
+	 * environment variables to have the loader enable any layers we want, without rebuilding the code.  The nice
+	 * thing about this is that you actually never need to think about layers in the code itself.  You can do
+	 * without them, and during testing just enable those layers you need from the outside.  This is not true (as
+	 * far as I can tell) about extensions; likely because the code needs to know what extensions are enabled to
+	 * use them, so it must enable them itself (if I'm wrong, please correct me).
 	 *
 	 * To enable layers using environment variables, you can do the following:
 	 *
-	 *     $ export VK_INSTANCE_LAYERS=VK_LAYER_LUNARG_param_checker
-	 *     $ export VK_DEVICE_LAYERS=VK_LAYER_LUNARG_param_checker
+	 *     $ export VK_INSTANCE_LAYERS=VK_LAYER_LUNARG_parameter_validation
+	 *     $ export VK_DEVICE_LAYERS=VK_LAYER_LUNARG_parameter_validation
 	 *
 	 * and then run your program.  Needless to say, the VK_INSTANCE_LAYERS enables layers that apply to the Vulkan
 	 * instance and VK_DEVICE_LAYERS enables those that are per-device.  The variables can actually take a list of
@@ -111,6 +111,19 @@ int main(int argc, char **argv)
 	 *
 	 * Feel free to experiment with other layers as well.  There are very useful layers available, which I will not
 	 * get into (at least not any time soon), but I'm sure you can benefit from.
+	 *
+	 * Notes:
+	 *
+	 * - VK_LAYER_LUNARG_parameter_validation was called VK_LAYER_LUNARG_param_checker in the past.  You can use
+	 *   `vulkaninfo` to see which name you have in your version (or run this program!).
+	 *
+	 * - Device layers are deprecated in Vulkan 1.0.17, so after this version you don't need to set
+	 *   VK_DEVICE_LAYERS at all.
+	 *
+	 * - If you don't see any of the layers installed through the Vulkan SDK, you would need to set VK_LAYER_PATH
+	 *   to where the layer manifest files are.  For example:
+	 *
+	 *         $ export VK_LAYER_PATH=/etc/vulkan/explicit_layer.d/
 	 */
 
 	retval = 0;

@@ -71,6 +71,9 @@ static VkResult get_device_layers_and_extensions(VkPhysicalDevice phy_dev, VkLay
 	 * Enumerating layers and extensions that are specific to a device is very similar to enumerating those that
 	 * are generic to a Vulkan instance.  The only difference is to use Device instead of Instance name, and give
 	 * the physical device as the first argument.
+	 *
+	 * Note: Vulkan 1.0.17 deprecates device layers.  For now, the API is kept for backwards-compatibility, and we
+	 * query them anyway, in case you have an older version installed.
 	 */
 
 	retval = vkEnumerateDeviceLayerProperties(phy_dev, layer_count, layers);
