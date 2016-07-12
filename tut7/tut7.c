@@ -421,17 +421,21 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 		if (res)
 			continue;
 
-		VkBufferViewCreateInfo view_info = {
-			.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO,
-			.buffer = buffers[i].buffer,
-			.format = buffers[i].format,
-			.offset = 0,
-			.range = VK_WHOLE_SIZE,
-		};
+		/* A buffer view can only be created on uniform and storage texel buffers */
+		if ((buffers[i].usage & VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT) || (buffers[i].usage & VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT))
+		{
+			VkBufferViewCreateInfo view_info = {
+				.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO,
+				.buffer = buffers[i].buffer,
+				.format = buffers[i].format,
+				.offset = 0,
+				.range = VK_WHOLE_SIZE,
+			};
 
-		res = vkCreateBufferView(dev->device, &view_info, NULL, &buffers[i].view);
-		if (res)
-			continue;
+			res = vkCreateBufferView(dev->device, &view_info, NULL, &buffers[i].view);
+			if (res)
+				continue;
+		}
 
 		++successful;
 	}
@@ -726,6 +730,10 @@ VkResult tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struc
 	 *
 	 * Just a reminder that in Tutorial 2, we created a command pool for each queue family.  That's why
 	 * `dev->command_pool_count` is used as the number of queue families.
+	 *
+	 * One could perform this check before creating the swapchain, to make sure the surface is at all compatible
+	 * with the driver.  The LUNARG_swapchain validation layer actually complains about this, so TODO: move this
+	 * to Tutorial 6 and call it before creating the swapchain.
 	 */
 	*presentable_queues = malloc(dev->command_pool_count * sizeof **presentable_queues);
 	*presentable_queue_count = 0;

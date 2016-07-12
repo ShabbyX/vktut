@@ -148,10 +148,11 @@ VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_dev
 		 * destroy command buffers frequently, you could give VK_COMMAND_POOL_CREATE_TRANSIENT_BIT to the
 		 * flags.  If you would like each command buffer to be resettable separately (we will get to what this
 		 * means later), you can give VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT to flags.  For now, let's
-		 * just go with the defaults.
+		 * go with resettable command buffers.
 		 */
 		VkCommandPoolCreateInfo pool_info = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+			.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 			.queueFamilyIndex = queue_info[i].queueFamilyIndex,
 		};
 

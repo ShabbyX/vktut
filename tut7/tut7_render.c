@@ -130,8 +130,8 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 			printf("Wait for fence failed: %s\n", tut1_VkResult_string(res));
 			return -1;
 		}
-		essentials->first_render = false;
 	}
+	essentials->first_render = false;
 
 	/*
 	 * We have seen many of the command buffer functions in Tutorial 4.  Here is a short recap:
@@ -288,6 +288,13 @@ int tut7_render_finish(struct tut7_render_essentials *essentials, struct tut2_de
 			1, &image_barrier);	/* our image transition */
 
 	vkEndCommandBuffer(essentials->cmd_buffer);
+
+	res = vkResetFences(dev->device, 1, &essentials->exec_fence);
+	if (res)
+	{
+		printf("Failed to reset fence: %s\n", tut1_VkResult_string(res));
+		return res;
+	}
 
 	/*
 	 * Having built the command buffer, we are ready to submit it to a queue for presentation.  We wanted our
