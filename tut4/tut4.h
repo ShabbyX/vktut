@@ -29,6 +29,8 @@ struct tut4_per_cmd_buffer_data
 	VkDescriptorSet set;
 	VkFence fence;
 
+	pthread_mutex_t *cmd_pool_mutex;
+
 	size_t start_index, end_index;
 
 	/* worker thread data */
@@ -49,6 +51,8 @@ struct tut4_data
 	VkDeviceMemory buffer_mem;
 	VkDescriptorPool set_pool;
 	size_t buffer_size;
+
+	pthread_mutex_t cmd_pool_mutex;
 
 	struct tut4_per_cmd_buffer_data *per_cmd_buffer;
 	uint32_t per_cmd_buffer_count;

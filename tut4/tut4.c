@@ -187,6 +187,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	if (retval)
 		goto exit_failed;
 
+	/* See `worker_thread()` for an explanation of why a mutex is needed */
+	pthread_mutex_init(&test_data->cmd_pool_mutex, NULL);
+
 	/*
 	 * Now that we have our buffer and descriptor pool allocated, we should create one buffer view, descriptor set
 	 * and fence for each thread.
@@ -207,6 +210,8 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		VkWriteDescriptorSet set_write;
 		VkFenceCreateInfo fence_info;
 		struct tut4_per_cmd_buffer_data *per_cmd_buffer_data = &test_data->per_cmd_buffer[i];
+
+		per_cmd_buffer_data->cmd_pool_mutex = &test_data->cmd_pool_mutex;
 
 		/*
 		 * The buffer is divided into (nearly) equal chunks between the threads.  Each thread is assigned
@@ -329,6 +334,8 @@ void tut4_free_test(struct tut2_device *dev, struct tut4_data *test_data)
 	 */
 	vkFreeMemory(dev->device, test_data->buffer_mem, NULL);
 
+	pthread_mutex_destroy(&test_data->cmd_pool_mutex);
+
 	free(test_data->per_cmd_buffer);
 
 	*test_data = (struct tut4_data){0};
@@ -379,6 +386,13 @@ static void *worker_thread(void *args)
 
 	VkResult retval;
 	VkCommandBufferBeginInfo begin_info;
+
+	/*
+	 * The command buffers, when changing in any way (allocation, deallocation, reset, record etc) need their
+	 * command pool synchronized between threads.  That means we can't record in parallel.  We use a mutex here to
+	 * prevent this.
+	 */
+	pthread_mutex_lock(per_cmd_buffer->cmd_pool_mutex);
 
 	/*
 	 * Perform the test.  This is quite simply redoing the same command TEST_ITERATIONS times.  Since the command
@@ -456,6 +470,8 @@ static void *worker_thread(void *args)
 
 	/* Stop recording */
 	vkEndCommandBuffer(per_cmd_buffer->cmd_buffer);
+
+	pthread_mutex_unlock(per_cmd_buffer->cmd_pool_mutex);
 
 	for (uint32_t i = 0; i < TEST_ITERATIONS; ++i)
 	{
