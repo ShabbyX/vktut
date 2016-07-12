@@ -29,8 +29,14 @@ bin_PROGRAMS += tut7/tut7
 tut7_tut7_SOURCES = tut7/tut7.c tut7/tut7_render.c tut7/main.c tut7/tut7.h tut7/tut7_render.h \
                     tut6/tut6.c tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c
 
+bin_PROGRAMS += tut8/tut8
+tut8_tut8_SOURCES = tut8/tut8.c tut8/tut8_render.c tut8/main.c tut8/tut8.h tut8/tut8_render.h \
+                    tut7/tut7.c tut7/tut7_render.c tut6/tut6.c tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c
+
 shaderdir = $(datadir)/shaders
-shader_DATA = shaders/tut3.comp.spv
+shader_DATA = shaders/tut3.comp.spv \
+              shaders/tut8.vert.spv \
+              shaders/tut8.frag.spv
 CLEANFILES = $(shader_DATA)
 
 V_GLSLANG = $(V_GLSLANG_@AM_V@)
