@@ -124,6 +124,9 @@ int main(int argc, char **argv)
 	 *   to where the layer manifest files are.  For example:
 	 *
 	 *         $ export VK_LAYER_PATH=/etc/vulkan/explicit_layer.d/
+	 *
+	 * - There is a layer named VK_LAYER_LUNARG_standard_validation which bundles many validation layers together.
+	 *   It's very nice.
 	 */
 
 	retval = 0;
