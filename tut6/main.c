@@ -227,9 +227,12 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 
 		/*
 		 * Make sure we don't end up busy looping.  Feel free to remove this and see what happens.  In the next
-		 * Tutorial we will see what can be done instead of sleeping.
+		 * Tutorial we will see what can be done instead of sleeping.  As a matter of fact, we should have used
+		 * proper synchronization when acquiring and presenting the image, but that's postponed to Tutorial 7.
+		 * If you see many errors reported by the validation layers, don't panic!
 		 *
-		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, removing this caused the whole UI to become very sluggish.
+		 * On Linux, with Nvidia GTX 970, and Vulkan 1.0.8, removing this caused the whole UI to become very
+		 * sluggish.
 		 */
 		usleep(10000);
 	}
