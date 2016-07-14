@@ -128,13 +128,20 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 * requirements are size (which is at least buffer_info.size), alignment (which is automatically taken into
 	 * account for device memory allocations), and memory types supporting this object.  We want the buffer to
 	 * be accessible by host for initialization and verification, so we have to search through the memory types
-	 * supporting the buffer and get one that is host visible.
+	 * supporting the buffer and get one that is host-visible.
 	 *
-	 * If the memory is not host-coherent, then we need to flush application writes, invalidate application caches
-	 * before reads, and insert memory barriers after device writes.  For the sake of simplicity, as this tutorial
-	 * is already huge, let's just ask for host-coherent memory.  Such a memory may not be available on all
-	 * devices, so ideally you would want to look for host-coherent memory, and if not found be prepared to do the
-	 * above flushes, cache invalidations and barriers.
+	 * The host-visible memory is either host-coherent or host-cached (or both).  Host-cached means that what the
+	 * host sees is a cached version of the device memory.  In such a case, one needs to flush application writes
+	 * and invalidate caches before reads.  With host-coherent memory, cache management is not needed, and good
+	 * news is that Vulkan guarantees that there should always be such a memory type that is both host-visible and
+	 * host-coherent.  If you find yourself in a situation where you are out of host-coherent memory, you might
+	 * want to be prepared to do the above flushes and cache invalidations if there is still host-cached memory
+	 * available instead.
+	 *
+	 * Do note that host-visible memories are still device memories, which means that at the end of the day, there
+	 * should be somebody ensuring coherency between host and device accesses.  This is done with a memory barrier,
+	 * which we will get to in a future tutorial.  Luckily for you, submitting a command buffer to a queue already
+	 * performs the necessary barriers to make sure host writes are visible to the device.
 	 */
 	vkGetBufferMemoryRequirements(dev->device, test_data->buffer, &mem_req);
 	mem_index = tut4_find_suitable_memory(phy_dev, dev, &mem_req,
@@ -330,7 +337,7 @@ void tut4_free_test(struct tut2_device *dev, struct tut4_data *test_data)
 	vkDestroyBuffer(dev->device, test_data->buffer, NULL);
 
 	/*
-	 * Although memory is taken and given back with Allocate/Free functions, but they behave the same way as
+	 * Although memory is taken and given back with Allocate/Free functions, they behave the same way as
 	 * Create/Destroy.
 	 */
 	vkFreeMemory(dev->device, test_data->buffer_mem, NULL);
@@ -528,6 +535,20 @@ static void *worker_thread(void *args)
 		 */
 		while (vkWaitForFences(per_cmd_buffer->device, 1, &per_cmd_buffer->fence, true, 1000000) == VK_TIMEOUT);
 	}
+
+	/*
+	 * TODO: a memory barrier is likely required here to make sure host reads after device writes are coherent.
+	 * Vulkan says:
+	 *
+	 * Host-visible memory types that advertise the VK_MEMORY_PROPERTY_HOST_COHERENT_BIT property still require
+	 * memory barriers between host and device in order to be coherent, but do not require additional cache management
+	 * operations to achieve coherency. For host writes to be seen by subsequent command buffer operations, a pipeline barrier
+	 * from a source of VK_ACCESS_HOST_WRITE_BIT and VK_PIPELINE_STAGE_HOST_BIT to a destination of the
+	 * relevant device pipeline stages and access types must be performed. Note that such a barrier is performed implicitly upon
+	 * each command buffer submission, so an explicit barrier is only rarely needed (e.g. if a command buffer waits upon an
+	 * event signaled by the host, where the host wrote some data after submission). For device writes to be seen by subsequent
+	 * host reads, a pipeline barrier is required to make the writes visible.
+	 */
 
 	per_cmd_buffer->success = 1;
 
