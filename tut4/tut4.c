@@ -404,7 +404,16 @@ static void *worker_thread(void *args)
 	 * command pool synchronized between threads.  That means we can't record in parallel.  We use a mutex here to
 	 * prevent this.
 	 */
-	pthread_mutex_lock(per_cmd_buffer->cmd_pool_mutex);
+	if (pthread_mutex_lock(per_cmd_buffer->cmd_pool_mutex))
+	{
+		/*
+		 * If this fails, something has gone seriously wrong.  I can't find a VkResult for
+		 * "something horrible" ;)  This error value won't be correct either way.  The ideal case would have
+		 * been something like VK_ERROR_SEE_ERRNO.
+		 */
+		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		goto exit_failed;
+	}
 
 	/*
 	 * Perform the test.  This is quite simply redoing the same command TEST_ITERATIONS times.  Since the command
@@ -483,7 +492,11 @@ static void *worker_thread(void *args)
 	/* Stop recording */
 	vkEndCommandBuffer(per_cmd_buffer->cmd_buffer);
 
-	pthread_mutex_unlock(per_cmd_buffer->cmd_pool_mutex);
+	if (pthread_mutex_unlock(per_cmd_buffer->cmd_pool_mutex))
+	{
+		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		goto exit_failed;
+	}
 
 	for (uint32_t i = 0; i < TEST_ITERATIONS; ++i)
 	{
