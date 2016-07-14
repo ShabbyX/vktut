@@ -59,13 +59,14 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 * - Semaphores: Used to coordinate command buffer execution between queues.  For example, queue A may execute
 	 *   its fragment shader stage, and only when it moves to the next stage, queue B would move to its fragment
 	 *   shader stage.  In this way, multiple threads could take turns going through their pipeline stages, with
-	 *   the end result showing on the screen one after the other.  There are other uses as well.
-	 * - Events: More fine-grained communication between queues can be achieved with events.  At any point, a queue
-	 *   may wait for some other event from a different queue.  Your imagination can go wild.
+	 *   the end result showing on the screen one after the other (This might make sense in tiling GPUs where the
+	 *   stages are actually performed separately).  There are other uses as well.
+	 * - Events: More fine-grained synchronization between the commands executed within a queue and possibly the
+	 *   host.  Your imagination can go wild.
 	 * - Barriers: Barriers are used to create an execution dependency between commands in a command buffer, making
-	 *   sure that memory access before the barrier happen before are visible to memory access after it.  In other
-	 *   words, it makes sure memory accesses before and after don't get rearranged and that caches don't cause
-	 *   problems.
+	 *   sure that memory accesses before the barrier happens are not reordered w.r.t to memory accesses after it.
+	 *   In other words, it makes sure memory accesses before and after don't get rearranged and that caches don't
+	 *   cause problems.
 	 *
 	 * For now, we just want to know when each command buffer execution is finished, so we need a simple fence.
 	 */
