@@ -196,7 +196,11 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		goto exit_failed;
 
 	/* See `worker_thread()` for an explanation of why a mutex is needed */
-	pthread_mutex_init(&test_data->cmd_pool_mutex, NULL);
+	if (pthread_mutex_init(&test_data->cmd_pool_mutex, NULL))
+	{
+		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		goto exit_failed;
+	}
 
 	/*
 	 * Now that we have our buffer and descriptor pool allocated, we should create one buffer view, descriptor set
