@@ -42,8 +42,8 @@ mkdir build && cd build
 make
 ```
 
-If you are building from source, you would need autotools installed and do the
-following step beforehand:
+If you are building from source, you would need autotools installed as well as
+autoconf-archive and do the following step beforehand:
 
 ```
 autoreconf -i
