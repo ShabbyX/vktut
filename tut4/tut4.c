@@ -141,7 +141,8 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 * Do note that host-visible memories are still device memories, which means that at the end of the day, there
 	 * should be somebody ensuring coherency between host and device accesses.  This is done with a memory barrier,
 	 * which we will get to in a future tutorial.  Luckily for you, submitting a command buffer to a queue already
-	 * performs the necessary barriers to make sure host writes are visible to the device.
+	 * performs the necessary barriers to make sure host writes are visible to the device.  If the host needs to
+	 * read back the memory (as is the case in this tutorial), a barrier is necessary.
 	 */
 	vkGetBufferMemoryRequirements(dev->device, test_data->buffer, &mem_req);
 	mem_index = tut4_find_suitable_memory(phy_dev, dev, &mem_req,
@@ -553,20 +554,6 @@ static void *worker_thread(void *args)
 		while (vkWaitForFences(per_cmd_buffer->device, 1, &per_cmd_buffer->fence, true, 1000000) == VK_TIMEOUT);
 	}
 
-	/*
-	 * TODO: a memory barrier is likely required here to make sure host reads after device writes are coherent.
-	 * Vulkan says:
-	 *
-	 * Host-visible memory types that advertise the VK_MEMORY_PROPERTY_HOST_COHERENT_BIT property still require
-	 * memory barriers between host and device in order to be coherent, but do not require additional cache management
-	 * operations to achieve coherency. For host writes to be seen by subsequent command buffer operations, a pipeline barrier
-	 * from a source of VK_ACCESS_HOST_WRITE_BIT and VK_PIPELINE_STAGE_HOST_BIT to a destination of the
-	 * relevant device pipeline stages and access types must be performed. Note that such a barrier is performed implicitly upon
-	 * each command buffer submission, so an explicit barrier is only rarely needed (e.g. if a command buffer waits upon an
-	 * event signaled by the host, where the host wrote some data after submission). For device writes to be seen by subsequent
-	 * host reads, a pipeline barrier is required to make the writes visible.
-	 */
-
 	per_cmd_buffer->success = 1;
 
 exit_failed:
@@ -645,6 +632,51 @@ static void *start_test(void *args)
 	/* Wait for them to finish */
 	for (size_t i = 0; i < test_data->per_cmd_buffer_count; ++i)
 		pthread_join(threads[i], NULL);
+
+	/*
+	 * I already explained that a memory barrier would be needed to make sure device writes are visible to host.
+	 * We are going to read back our buffer to make sure the execution was done correctly, so we need this barrier.
+	 * Barriers require some explanation, and we will do that in a future tutorial.  For now, you could take this
+	 * part as it is without question.
+	 *
+	 * "But...", without question I said!
+	 */
+	vkResetCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer, 0);
+	VkCommandBufferBeginInfo begin_info = (VkCommandBufferBeginInfo){
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+	};
+	retval = vkBeginCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer, &begin_info);
+	if (retval)
+		goto exit_failed;
+	VkBufferMemoryBarrier buffer_barrier = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+		.dstAccessMask = VK_ACCESS_HOST_READ_BIT,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.buffer = test_data->buffer,
+		.offset = 0,
+		.size = test_data->buffer_size * sizeof(float),
+	};
+	vkCmdPipelineBarrier(test_data->per_cmd_buffer[0].cmd_buffer,
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_HOST_BIT,
+			0,			/* no flags */
+			0, NULL,		/* no memory barriers */
+			1, &buffer_barrier,	/* our buffer barrier */
+			0, NULL);		/* no image barriers */
+
+	VkSubmitInfo submit_info = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &test_data->per_cmd_buffer[0].cmd_buffer,
+	};
+	vkEndCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer);
+	vkQueueSubmit(test_data->per_cmd_buffer[0].queue, 1, &submit_info, test_data->per_cmd_buffer[0].fence);
+	retval = vkWaitForFences(test_data->dev->device, 1, &test_data->per_cmd_buffer[0].fence, true, 1000000000);
+	if (retval)
+		goto exit_failed;
+	/* ... up to here */
 
 	/* And make sure they did all the computations correctly, there were no races or cache problems etc */
 	retval = vkMapMemory(test_data->dev->device, test_data->buffer_mem, 0, test_data->buffer_size * sizeof(float), 0, &mem);
