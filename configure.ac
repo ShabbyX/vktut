@@ -18,7 +18,7 @@ LT_INIT
 
 # Make sure C99 is available
 AS_IF([test x"$ac_cv_prog_cc_c99" = xno],
-  AC_MSG_ERROR([C99 support is required]))
+  [AC_MSG_ERROR([C99 support is required])])
 
 # Checks for header files
 AC_CHECK_HEADERS([stddef.h stdlib.h string.h time.h], [], [AC_MSG_ERROR(Required header missing)])
