@@ -61,8 +61,8 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 *   shader stage.  In this way, multiple threads could take turns going through their pipeline stages, with
 	 *   the end result showing on the screen one after the other (This might make sense in tiling GPUs where the
 	 *   stages are actually performed separately).  There are other uses as well.
-	 * - Events: More fine-grained synchronization between the commands executed within a queue and possibly the
-	 *   host.  Your imagination can go wild.
+	 * - Events: More fine-grained synchronization between the commands executed within a queue (even between
+	 *   multiple commands buffers submitted to the queue) and possibly the host.  Your imagination can go wild.
 	 * - Barriers: Barriers are used to create an execution dependency between commands in a command buffer, making
 	 *   sure that memory accesses before the barrier happens are not reordered w.r.t to memory accesses after it.
 	 *   In other words, it makes sure memory accesses before and after don't get rearranged and that caches don't
