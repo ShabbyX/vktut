@@ -33,7 +33,7 @@ AC_CHECK_LIB([rt], [clock_gettime])
 
 # Check for pthread
 AX_PTHREAD([
-    LIBS="$PTHREAD_CFLAGS $PTHREAD_LIBS $LIBS"
+    LIBS="$PTHREAD_LIBS $LIBS"
     CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
     CC="$PTHREAD_CC"
   ], [AC_MSG_ERROR(Pthread missing)])
