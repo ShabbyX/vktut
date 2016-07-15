@@ -39,7 +39,7 @@ tarball, you can go through the usual procedure:
 ```
 mkdir build && cd build
 ../configure
-make
+make -j
 ```
 
 If you are building from source, you would need autotools installed as well as

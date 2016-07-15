@@ -39,6 +39,10 @@ AX_PTHREAD([
   ], [AC_MSG_ERROR(Pthread missing)])
 
 # Now that the basics are checked, make sure vulkan is installed
+AS_IF([test x"$VULKAN_SDK" != x], [
+  CPPFLAGS="$CPPFLAGS -I$VULKAN_SDK/include"
+  LDFLAGS="$LDFLAGS -L$VULKAN_SDK/lib"
+])
 AC_CHECK_HEADER([vulkan/vulkan.h], [], [AC_MSG_ERROR(Vulkan header not found)])
 AC_CHECK_LIB([vulkan], [vkCreateInstance], [], [AC_MSG_ERROR(Vulkan library not found)])
 
