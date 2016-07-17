@@ -1,6 +1,8 @@
 Shabi's Vulkan Tutorials
 ========================
 
+Travis-CI: [![Build Status](https://travis-ci.org/ShabbyX/vktut.svg?branch=master)](https://travis-ci.org/ShabbyX/vktut)
+
 This is a repository of tutorials on Vulkan.  It starts with the basics,
 enumerating your GPUs, allocating memory and getting computation done.  It then
 moves on to actually displaying things and using shaders.  Along the way, some
