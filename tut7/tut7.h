@@ -96,16 +96,16 @@ struct tut7_graphics_buffers
 	VkFramebuffer framebuffer;
 };
 
-VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut7_image *images, uint32_t image_count);
-VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut7_buffer *buffers, uint32_t buffer_count);
-VkResult tut7_load_shaders(struct tut2_device *dev,
+tut1_error tut7_load_shaders(struct tut2_device *dev,
 		struct tut7_shader *shaders, uint32_t shader_count);
-VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		VkSurfaceFormatKHR surface_format,
 		struct tut7_graphics_buffers *graphics_buffers, uint32_t graphics_buffer_count, VkRenderPass *render_pass);
-VkResult tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		VkSurfaceKHR surface, uint32_t **presentable_queues, uint32_t *presentable_queue_count);
 
 void tut7_free_images(struct tut2_device *dev, struct tut7_image *images, uint32_t image_count);

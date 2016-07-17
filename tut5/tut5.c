@@ -24,18 +24,20 @@
 #define TUT5_MAX_LAYER_COUNT 20
 #define TUT5_MAX_EXTENSION_COUNT 10
 
-static VkResult get_layers_and_extensions(VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t *layer_count,
+static tut1_error get_layers_and_extensions(VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t *layer_count,
 		VkExtensionProperties extensions[TUT5_MAX_LAYER_COUNT + 1][TUT5_MAX_EXTENSION_COUNT], uint32_t extensions_count[TUT5_MAX_LAYER_COUNT + 1])
 {
-	VkResult retval, res;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	/*
 	 * To get a list of layers, vkEnumerateInstanceLayerProperties can be simply called.  If there are more layers
 	 * than our array can hold, VK_INCOMPLETE is returned, in which case we don't really mind and we'll enable as
 	 * many layers as possible.
 	 */
-	retval = vkEnumerateInstanceLayerProperties(layer_count, layers);
-	if (retval < 0)
+	res = vkEnumerateInstanceLayerProperties(layer_count, layers);
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 
 	/*
@@ -44,17 +46,15 @@ static VkResult get_layers_and_extensions(VkLayerProperties layers[TUT5_MAX_LAYE
 	 */
 	extensions_count[0] = TUT5_MAX_EXTENSION_COUNT;
 	res = vkEnumerateInstanceExtensionProperties(NULL, &extensions_count[0], extensions[0]);
-	if (res)
-		retval = res;
-	if (retval < 0)
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 	for (uint32_t i = 0; i < *layer_count; ++i)
 	{
 		extensions_count[i + 1] = TUT5_MAX_EXTENSION_COUNT;
 		res = vkEnumerateInstanceExtensionProperties(layers[i].layerName, &extensions_count[i + 1], extensions[i + 1]);
-		if (res)
-			retval = res;
-		if (retval < 0)
+		tut1_error_set_vkresult(&retval, res);
+		if (res < 0)
 			goto exit_failed;
 	}
 
@@ -62,10 +62,11 @@ exit_failed:
 	return retval;
 }
 
-static VkResult get_device_layers_and_extensions(VkPhysicalDevice phy_dev, VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t *layer_count,
+static tut1_error get_device_layers_and_extensions(VkPhysicalDevice phy_dev, VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t *layer_count,
 		VkExtensionProperties extensions[TUT5_MAX_LAYER_COUNT + 1][TUT5_MAX_EXTENSION_COUNT], uint32_t extensions_count[TUT5_MAX_LAYER_COUNT + 1])
 {
-	VkResult retval, res;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	/*
 	 * Enumerating layers and extensions that are specific to a device is very similar to enumerating those that
@@ -76,23 +77,22 @@ static VkResult get_device_layers_and_extensions(VkPhysicalDevice phy_dev, VkLay
 	 * query them anyway, in case you have an older version installed.
 	 */
 
-	retval = vkEnumerateDeviceLayerProperties(phy_dev, layer_count, layers);
-	if (retval < 0)
+	res = vkEnumerateDeviceLayerProperties(phy_dev, layer_count, layers);
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 
 	extensions_count[0] = TUT5_MAX_EXTENSION_COUNT;
 	res = vkEnumerateDeviceExtensionProperties(phy_dev, NULL, &extensions_count[0], extensions[0]);
-	if (res)
-		retval = res;
-	if (retval < 0)
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 	for (uint32_t i = 0; i < *layer_count; ++i)
 	{
 		extensions_count[i + 1] = TUT5_MAX_EXTENSION_COUNT;
 		res = vkEnumerateDeviceExtensionProperties(phy_dev, layers[i].layerName, &extensions_count[i + 1], extensions[i + 1]);
-		if (res)
-			retval = res;
-		if (retval < 0)
+		tut1_error_set_vkresult(&retval, res);
+		if (res < 0)
 			goto exit_failed;
 	}
 
@@ -114,7 +114,7 @@ static void pack_layer_and_extension_names(VkLayerProperties layers[TUT5_MAX_LAY
 	}
 }
 
-VkResult tut5_init(VkInstance *vk)
+tut1_error tut5_init(VkInstance *vk)
 {
 	VkLayerProperties layers[TUT5_MAX_LAYER_COUNT];
 	uint32_t layer_count = TUT5_MAX_LAYER_COUNT;
@@ -136,14 +136,15 @@ VkResult tut5_init(VkInstance *vk)
 	};
 	VkInstanceCreateInfo info;
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	/*
 	 * We have already seen how to create a Vulkan instance in Tutorial 1.  In this tutorial, we will enumerate all
 	 * layers and extensions (depending on the layer or not) and enable all of them, why not!
 	 */
 	retval = get_layers_and_extensions(layers, &layer_count, extensions, extensions_count);
-	if (retval < 0)
+	if (tut1_error_is_error(&retval))
 		goto exit_failed;
 
 	/*
@@ -172,13 +173,14 @@ VkResult tut5_init(VkInstance *vk)
 		.ppEnabledExtensionNames = extension_names,
 	};
 
-	return vkCreateInstance(&info, NULL, vk);
+	res = vkCreateInstance(&info, NULL, vk);
+	tut1_error_set_vkresult(&retval, res);
 
 exit_failed:
 	return retval;
 }
 
-VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count)
 {
 	VkLayerProperties layers[TUT5_MAX_LAYER_COUNT];
@@ -191,7 +193,8 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 	const char *extension_names[(TUT5_MAX_LAYER_COUNT + 1) * TUT5_MAX_EXTENSION_COUNT] = {NULL};
 	uint32_t total_extensions_count = 0;
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	*dev = (struct tut2_device){0};
 
@@ -222,7 +225,10 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 
 	/* If there are no compatible queues, there is little one can do here */
 	if (*queue_info_count == 0)
-		return VK_ERROR_FEATURE_NOT_PRESENT;
+	{
+		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
+		goto exit_failed;
+	}
 
 	/*
 	 * In tut5_init, we enabled all layers and extensions that there are.  Here, we will again enable every layer
@@ -230,8 +236,8 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 	 * that you are interested in, and therefore you wouldn't need to enumerate anything.
 	 */
 	retval = get_device_layers_and_extensions(phy_dev->physical_device, layers, &layer_count, extensions, extensions_count);
-	if (retval < 0)
-		return retval;
+	if (tut1_error_is_error(&retval))
+		goto exit_failed;
 
 	/* Once again, we need to pack the names in a simple array to be given to VkDeviceQueueCreateInfo */
 	pack_layer_and_extension_names(layers, layer_count, extensions, extensions_count,
@@ -248,7 +254,11 @@ VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 		.pEnabledFeatures = &phy_dev->features,
 	};
 
-	return vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	res = vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	tut1_error_set_vkresult(&retval, res);
+
+exit_failed:
+	return retval;
 }
 
 static void print_layers_and_extensions(const char *indent, VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t layer_count,
@@ -285,10 +295,10 @@ void tut5_print_layers_and_extensions(void)
 	VkExtensionProperties extensions[TUT5_MAX_LAYER_COUNT + 1][TUT5_MAX_EXTENSION_COUNT];
 	uint32_t extensions_count[TUT5_MAX_LAYER_COUNT + 1];
 
-	VkResult res = get_layers_and_extensions(layers, &layer_count, extensions, extensions_count);
-	if (res < 0)
-		printf("Failed to enumerate instance layers and extensions: %s\n", tut1_VkResult_string(res));
-	else if (res > 0)
+	tut1_error res = get_layers_and_extensions(layers, &layer_count, extensions, extensions_count);
+	if (tut1_error_is_error(&res))
+		tut1_error_printf(&res, "Failed to enumerate instance layers and extensions\n");
+	else if (tut1_error_is_warning(&res))
 		printf("Much instance layers and extensions! Such Wow!\n");
 
 	printf("Instance:\n");
@@ -303,12 +313,11 @@ void tut5_print_device_layers_and_extensions(struct tut1_physical_device *phy_de
 	VkExtensionProperties extensions[TUT5_MAX_LAYER_COUNT + 1][TUT5_MAX_EXTENSION_COUNT];
 	uint32_t extensions_count[TUT5_MAX_LAYER_COUNT + 1];
 
-	VkResult res = get_device_layers_and_extensions(phy_dev->physical_device, layers, &layer_count, extensions, extensions_count);
-	if (res < 0)
-		printf("%s: Failed to enumerate device layers and extensions: %s\n",
-				phy_dev->properties.deviceName, tut1_VkResult_string(res));
-	else if (res > 0)
-		printf("%s: Much instance layers and extensions! Such Wow!\n", phy_dev->properties.deviceName);
+	tut1_error res = get_device_layers_and_extensions(phy_dev->physical_device, layers, &layer_count, extensions, extensions_count);
+	if (tut1_error_is_error(&res))
+		tut1_error_printf(&res, "%s: Failed to enumerate device layers and extensions\n", phy_dev->properties.deviceName);
+	else if (tut1_error_is_warning(&res))
+		printf("%s: Much device layers and extensions! Such Wow!\n", phy_dev->properties.deviceName);
 
 	printf("- Device %s:\n", phy_dev->properties.deviceName);
 	print_layers_and_extensions("  ", layers, layer_count, extensions, extensions_count);

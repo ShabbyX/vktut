@@ -80,8 +80,8 @@ struct tut8_pipeline
 	VkDescriptorPool set_pool;
 };
 
-VkResult tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count);
-VkResult tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipeline *pipelines, uint32_t pipeline_count);
+tut1_error tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count);
+tut1_error tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipeline *pipelines, uint32_t pipeline_count);
 
 void tut8_free_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count);
 void tut8_free_pipelines(struct tut2_device *dev, struct tut8_pipeline *pipelines, uint32_t pipeline_count);

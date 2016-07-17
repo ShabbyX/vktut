@@ -24,13 +24,13 @@
 #include "../tut7/tut7_render.h"
 
 /* Fill the contents of a host-visible buffer to buffer with arbitrary data */
-VkResult tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name);
+tut1_error tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name);
 
 /*
  * Copy a buffer to another, for example from a host-visible one to a device-local one.  This uses a command buffer,
  * submits it, and waits for it to finish, so it's not supposed to be used while recording a command buffer.
  */
-VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
 		struct tut7_buffer *to, struct tut7_buffer *from, size_t size, const char *name);
 
 /*
@@ -38,7 +38,7 @@ VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_ess
  * Transition an image to a new layout.  This uses a command buffer, submits it, and waits for it to finish, so it's
  * not supposed to be used while recording a command buffer.
  */
-VkResult tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+tut1_error tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
 		struct tut7_image *images, uint32_t image_count,
 		VkImageLayout from, VkImageLayout to, VkImageAspectFlags aspect, const char *name);
 

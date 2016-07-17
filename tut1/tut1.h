@@ -22,8 +22,9 @@
 
 #include <vulkan/vulkan.h>
 #include <stdbool.h>
+#include "tut1_error.h"
 
-VkResult tut1_init(VkInstance *vk);
+tut1_error tut1_init(VkInstance *vk);
 void tut1_exit(VkInstance vk);
 
 #define TUT1_MAX_QUEUE_FAMILY 10
@@ -40,7 +41,7 @@ struct tut1_physical_device
 	bool queue_families_incomplete;
 };
 
-VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count);
+tut1_error tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count);
 
 const char *tut1_VkResult_string(VkResult res);
 const char *tut1_VkPhysicalDeviceType_string(VkPhysicalDeviceType type);

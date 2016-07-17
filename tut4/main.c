@@ -26,7 +26,7 @@
 
 int main(int argc, char **argv)
 {
-	VkResult res;
+	tut1_error res;
 	int retval = EXIT_FAILURE;
 	VkInstance vk;
 	struct tut1_physical_device phy_devs[MAX_DEVICES];
@@ -73,17 +73,17 @@ int main(int argc, char **argv)
 
 	/* Fire up Vulkan */
 	res = tut1_init(&vk);
-	if (res)
+	if (!tut1_error_is_success(&res))
 	{
-		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not initialize Vulkan\n");
 		goto exit_bad_init;
 	}
 
 	/* Enumerate devices */
 	res = tut1_enumerate_devices(vk, phy_devs, &dev_count);
-	if (res < 0)
+	if (tut1_error_is_error(&res))
 	{
-		printf("Could not enumerate devices: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not enumerate devices\n");
 		goto exit_bad_enumerate;
 	}
 
@@ -91,9 +91,9 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut2_setup(&phy_devs[i], &devs[i], VK_QUEUE_COMPUTE_BIT);
-		if (res)
+		if (!tut1_error_is_success(&res))
 		{
-			printf("Could not setup logical device %u, command pools and queues: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not setup logical device %u, command pools and queues\n", i);
 			goto exit_bad_setup;
 		}
 	}
@@ -102,9 +102,9 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut3_load_shader(&devs[i], argv[1], &shaders[i]);
-		if (res)
+		if (!tut1_error_is_success(&res))
 		{
-			printf("Could not load shader on device %u: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not load shader on device %u\n", i);
 			goto exit_bad_shader;
 		}
 	}
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut3_make_compute_pipeline(&devs[i], &pipelines[i], shaders[i]);
-		if (res)
+		if (!tut1_error_is_success(&res))
 		{
-			printf("Could not allocate enough pipelines on device %u: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not allocate enough pipelines on device %u\n", i);
 			goto exit_bad_pipeline;
 		}
 	}
@@ -141,9 +141,9 @@ int main(int argc, char **argv)
 		}
 
 		res = tut4_prepare_test(&phy_devs[i], &devs[i], &pipelines[i], &test_data[i], this_buffer_size, this_thread_count);
-		if (res)
+		if (!tut1_error_is_success(&res))
 		{
-			printf("Could not allocate resources on device %u: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not allocate resources on device %u\n", i);
 			goto exit_bad_test_prepare;
 		}
 	}
@@ -171,8 +171,8 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 		if (!test_data[i].success)
 		{
-			if (test_data[i].error)
-				printf("Error starting test on device %u: %s\n", i, tut1_VkResult_string(test_data[i].error));
+			if (!tut1_error_is_success(&test_data[i].error))
+				tut1_error_printf(&test_data[i].error, "Error starting test on device %u\n", i);
 			else
 				printf("The test didn't produce expected results (device %u)\n", i);
 			success = 0;
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
 	 *
 	 * In this test, the total amount of time to waste is 3.2 seconds (32ms for each "render" operation, and there
 	 * are a hundred of them).  Depending on your GPU, you may notice that above a certain number of threads, there
-	 * is no more any speedup.  That is when the amount of time spend in each CPU thread becomes less than the time
+	 * is no more any speedup.  That is when the amount of time spent in each CPU thread becomes less than the time
 	 * spent in the GPU for that thread's task, so whether the CPU spent time doing something before waiting for
 	 * the GPU doesn't make a difference in the execution time.
 	 */

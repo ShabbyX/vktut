@@ -19,27 +19,32 @@
 
 #include "tut8_render.h"
 
-VkResult tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name)
+tut1_error tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name)
 {
 	void *mem = NULL;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
-	VkResult res = vkMapMemory(dev->device, to->buffer_mem, 0, size, 0, &mem);
+	res = vkMapMemory(dev->device, to->buffer_mem, 0, size, 0, &mem);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to map memory of the %s buffer: %s\n", name, tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Failed to map memory of the %s buffer\n", name);
+		goto exit_failed;
 	}
 
 	memcpy(mem, from, size);
 
 	vkUnmapMemory(dev->device, to->buffer_mem);
 
-	return 0;
+exit_failed:
+	return retval;
 }
 
-VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
 		struct tut7_buffer *to, struct tut7_buffer *from, size_t size, const char *name)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	vkResetCommandBuffer(essentials->cmd_buffer, 0);
@@ -48,10 +53,11 @@ VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_ess
 		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 	};
 	res = vkBeginCommandBuffer(essentials->cmd_buffer, &begin_info);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Couldn't begin recording a command buffer to copy the %s buffer: %s\n", name, tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Couldn't begin recording a command buffer to copy the %s buffer\n", name);
+		goto exit_failed;
 	}
 
 	/* Let's see if you can figure out this very complicated operation! */
@@ -65,10 +71,11 @@ VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_ess
 	vkEndCommandBuffer(essentials->cmd_buffer);
 
 	res = vkResetFences(dev->device, 1, &essentials->exec_fence);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to reset fence: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Failed to reset fence\n");
+		goto exit_failed;
 	}
 
 	/* Submit the command buffer to go ahead with the copy, and wait for it to finish */
@@ -79,13 +86,18 @@ VkResult tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_ess
 	};
 
 	vkQueueSubmit(essentials->present_queue, 1, &submit_info, essentials->exec_fence);
-	return vkWaitForFences(dev->device, 1, &essentials->exec_fence, true, 1000000000);
+	res = vkWaitForFences(dev->device, 1, &essentials->exec_fence, true, 1000000000);
+	tut1_error_set_vkresult(&retval, res);
+
+exit_failed:
+	return retval;
 }
 
-VkResult tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+tut1_error tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
 		struct tut7_image *images, uint32_t image_count,
 		VkImageLayout from, VkImageLayout to, VkImageAspectFlags aspect, const char *name)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	vkResetCommandBuffer(essentials->cmd_buffer, 0);
@@ -94,10 +106,11 @@ VkResult tut8_render_transition_images(struct tut2_device *dev, struct tut7_rend
 		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 	};
 	res = vkBeginCommandBuffer(essentials->cmd_buffer, &begin_info);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Couldn't begin recording a command buffer to transition the %s image: %s\n", name, tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Couldn't begin recording a command buffer to transition the %s image\n", name);
+		goto exit_failed;
 	}
 
 	/*
@@ -137,10 +150,11 @@ VkResult tut8_render_transition_images(struct tut2_device *dev, struct tut7_rend
 	vkEndCommandBuffer(essentials->cmd_buffer);
 
 	res = vkResetFences(dev->device, 1, &essentials->exec_fence);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to reset fence: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Failed to reset fence\n");
+		goto exit_failed;
 	}
 
 	/* Submit the command buffer to go ahead with the copy, and wait for it to finish */
@@ -151,5 +165,9 @@ VkResult tut8_render_transition_images(struct tut2_device *dev, struct tut7_rend
 	};
 
 	vkQueueSubmit(essentials->present_queue, 1, &submit_info, essentials->exec_fence);
-	return vkWaitForFences(dev->device, 1, &essentials->exec_fence, true, 1000000000);
+	res = vkWaitForFences(dev->device, 1, &essentials->exec_fence, true, 1000000000);
+	tut1_error_set_vkresult(&retval, res);
+
+exit_failed:
+	return retval;
 }

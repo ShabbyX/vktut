@@ -219,7 +219,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 
 int main(int argc, char **argv)
 {
-	VkResult res;
+	tut1_error res;
 	int retval = EXIT_FAILURE;
 	VkInstance vk;
 	struct tut1_physical_device phy_devs[MAX_DEVICES];
@@ -243,17 +243,17 @@ int main(int argc, char **argv)
 
 	/* Fire up Vulkan */
 	res = tut6_init(&vk);
-	if (res)
+	if (!tut1_error_is_success(&res))
 	{
-		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not initialize Vulkan\n");
 		goto exit_bad_init;
 	}
 
 	/* Enumerate devices */
 	res = tut1_enumerate_devices(vk, phy_devs, &dev_count);
-	if (res < 0)
+	if (tut1_error_is_error(&res))
 	{
-		printf("Could not enumerate devices: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not enumerate devices\n");
 		goto exit_bad_enumerate;
 	}
 
@@ -261,9 +261,9 @@ int main(int argc, char **argv)
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut6_setup(&phy_devs[i], &devs[i], VK_QUEUE_GRAPHICS_BIT);
-		if (res < 0)
+		if (tut1_error_is_error(&res))
 		{
-			printf("Could not setup logical device %u, command pools and queues: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not setup logical device %u, command pools and queues\n", i);
 			goto exit_bad_setup;
 		}
 	}
@@ -292,9 +292,9 @@ int main(int argc, char **argv)
 	{
 		/* Let's still not bother with threads and use just 1 (the current thread) */
 		res = tut6_get_swapchain(vk, &phy_devs[i], &devs[i], &swapchains[i], windows[i], 1, no_vsync);
-		if (res)
+		if (tut1_error_is_error(&res))
 		{
-			printf("Could not create surface and swapchain for device %u: %s\n", i, tut1_VkResult_string(res));
+			tut1_error_printf(&res, "Could not create surface and swapchain for device %u\n", i);
 			goto exit_bad_swapchain;
 		}
 	}

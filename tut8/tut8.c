@@ -21,7 +21,7 @@
 #include <string.h>
 #include "tut8.h"
 
-VkResult tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count)
+tut1_error tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count)
 {
 	/*
 	 * We have created our buffers, images, shaders and everything else we need.  It is time to create descriptor
@@ -29,12 +29,13 @@ VkResult tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout 
 	 * the layout of these descriptor sets and pipelines.
 	 */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	for (uint32_t i = 0; i < layout_count; ++i)
 	{
 		struct tut8_layout *layout = &layouts[i];
 		struct tut8_resources *resources = layout->resources;
-		VkResult res;
 
 		layout->set_layout = NULL;
 		layout->pipeline_layout = NULL;
@@ -142,6 +143,7 @@ VkResult tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout 
 		};
 
 		res = vkCreateDescriptorSetLayout(dev->device, &set_layout_info, NULL, &layout->set_layout);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -160,16 +162,18 @@ VkResult tut8_make_graphics_layouts(struct tut2_device *dev, struct tut8_layout 
 		};
 
 		res = vkCreatePipelineLayout(dev->device, &pipeline_layout_info, NULL, &layout->pipeline_layout);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
 		++successful;
 	}
 
-	return successful == layout_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == layout_count?VK_SUCCESS:VK_INCOMPLETE);
+	return retval;
 }
 
-VkResult tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipeline *pipelines, uint32_t pipeline_count)
+tut1_error tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipeline *pipelines, uint32_t pipeline_count)
 {
 	/*
 	 * Each pipeline we create is going to have a set of shaders bound to it.  This means that if in one scene you
@@ -182,13 +186,14 @@ VkResult tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipel
 	 * commands (more on this later).
 	 */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	for (uint32_t i = 0; i < pipeline_count; ++i)
 	{
 		struct tut8_pipeline *pipeline = &pipelines[i];
 		struct tut8_layout *layout = pipeline->layout;
 		struct tut8_resources *resources = layout->resources;
-		VkResult res;
 
 		pipeline->pipeline = NULL;
 		pipeline->set_pool = NULL;
@@ -362,6 +367,7 @@ VkResult tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipel
 		 * here.  The second argument to `vkCreateGraphicsPipelines` is the pipeline cache.
 		 */
 		res = vkCreateGraphicsPipelines(dev->device, NULL, 1, &pipeline_info, NULL, &pipeline->pipeline);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -442,14 +448,15 @@ VkResult tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pipel
 		};
 
 		res = vkCreateDescriptorPool(dev->device, &set_info, NULL, &pipeline->set_pool);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
 		++successful;
 	}
 
-
-	return successful == pipeline_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == pipeline_count?VK_SUCCESS:VK_INCOMPLETE);
+	return retval;
 }
 
 void tut8_free_layouts(struct tut2_device *dev, struct tut8_layout *layouts, uint32_t layout_count)

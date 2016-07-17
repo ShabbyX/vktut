@@ -22,7 +22,7 @@
 #include <string.h>
 #include "tut3.h"
 
-VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkShaderModule *shader)
+tut1_error tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkShaderModule *shader)
 {
 	/*
 	 * Allocating a shader is easy.  Similar to other vkCreate* functions, a CreateInfo structure is taken that
@@ -30,7 +30,8 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 	 * The VkShaderModuleCreateInfo struct, besides the usual attributes (such as sType or flags), simply takes the
 	 * SPIR-V code of the shader.
 	 */
-	int retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 	void *code = NULL;
 	size_t size = 0, cur = 0;
 	FILE *fin = fopen(spirv_file, "rb");
@@ -38,7 +39,10 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 	*shader = NULL;
 
 	if (fin == NULL)
-		return VK_ERROR_INITIALIZATION_FAILED;	/* For the lack of a better error code */
+	{
+		tut1_error_set_errno(&retval, errno);
+		goto exit_no_file;
+	}
 
 	/* Get the size of the file */
 	fseek(fin, 0, SEEK_END);
@@ -49,7 +53,7 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 	code = malloc(size);
 	if (code == NULL)
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, errno);
 		goto exit_no_mem;
 	}
 
@@ -59,7 +63,7 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 		size_t read = fread(code + cur, 1, size - cur, fin);
 		if (read == 0)
 		{
-			retval = VK_ERROR_INITIALIZATION_FAILED;	/* For the lack of a better error code */
+			tut1_error_set_errno(&retval, errno);
 			goto exit_io_error;
 		}
 		cur += read;
@@ -72,13 +76,14 @@ VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkSha
 		.pCode = code,
 	};
 
-	retval = vkCreateShaderModule(dev->device, &info, NULL, shader);
+	res = vkCreateShaderModule(dev->device, &info, NULL, shader);
+	tut1_error_set_vkresult(&retval, res);
 
 exit_io_error:
 	free(code);
 exit_no_mem:
 	fclose(fin);
-
+exit_no_file:
 	return retval;
 }
 
@@ -92,7 +97,7 @@ void tut3_free_shader(struct tut2_device *dev, VkShaderModule shader)
 	vkDestroyShaderModule(dev->device, shader, NULL);
 }
 
-VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelines *pipelines, VkShaderModule shader)
+tut1_error tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelines *pipelines, VkShaderModule shader)
 {
 	/*
 	 * For the command buffers to execute commands, they need to be bound to a pipeline.  From OpenGL, you must be
@@ -141,7 +146,8 @@ VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelin
 	 * and images).  For now, let's ignore push constants.
 	 */
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 	uint32_t cmd_buffer_count = 0;
 
 	*pipelines = (struct tut3_pipelines){0};
@@ -154,7 +160,7 @@ VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelin
 	pipelines->pipelines = malloc(cmd_buffer_count * sizeof *pipelines->pipelines);
 	if (pipelines->pipelines == NULL)
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, errno);
 		goto exit_failed;
 	}
 	memset(pipelines->pipelines, 0, cmd_buffer_count * sizeof *pipelines->pipelines);
@@ -195,8 +201,9 @@ VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelin
 			.pBindings = &set_layout_binding,
 		};
 
-		retval = vkCreateDescriptorSetLayout(dev->device, &set_layout_info, NULL, &pl->set_layout);
-		if (retval)
+		res = vkCreateDescriptorSetLayout(dev->device, &set_layout_info, NULL, &pl->set_layout);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 
 		/*
@@ -210,8 +217,9 @@ VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelin
 			.pSetLayouts = &pl->set_layout,
 		};
 
-		retval = vkCreatePipelineLayout(dev->device, &pipeline_layout_info, NULL, &pl->pipeline_layout);
-		if (retval)
+		res = vkCreatePipelineLayout(dev->device, &pipeline_layout_info, NULL, &pl->pipeline_layout);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 
 		/*
@@ -249,8 +257,9 @@ VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelin
 			.layout = pl->pipeline_layout,
 		};
 
-		retval = vkCreateComputePipelines(dev->device, NULL, 1, &pipeline_info, NULL, &pl->pipeline);
-		if (retval)
+		res = vkCreateComputePipelines(dev->device, NULL, 1, &pipeline_info, NULL, &pl->pipeline);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 	}
 

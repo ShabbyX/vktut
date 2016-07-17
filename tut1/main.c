@@ -49,7 +49,7 @@ static void print_surprise(const char *indent, const char *who, const char *what
 
 int main(int argc, char **argv)
 {
-	VkResult res;
+	tut1_error res;
 	int retval = EXIT_FAILURE;
 	VkInstance vk;
 	struct tut1_physical_device devs[MAX_DEVICES];
@@ -57,9 +57,9 @@ int main(int argc, char **argv)
 
 	/* Fire up Vulkan */
 	res = tut1_init(&vk);
-	if (res)
+	if (!tut1_error_is_success(&res))
 	{
-		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not initialize Vulkan\n");
 		goto exit_bad_init;
 	}
 
@@ -67,15 +67,15 @@ int main(int argc, char **argv)
 
 	/* Take a look at what devices there are */
 	res = tut1_enumerate_devices(vk, devs, &dev_count);
-	if (res < 0)
-	{
-		printf("Could not enumerate devices: %s\n", tut1_VkResult_string(res));
-		goto exit_bad_enumerate;
-	}
-	else if (res == VK_INCOMPLETE)
+	if (tut1_error_is_warning(&res))
 	{
 		print_surprise("", "you've got", "devices", "dream of");
 		printf("I have information on only %"PRIu32" of them:\n", dev_count);
+	}
+	else if (!tut1_error_is_success(&res))
+	{
+		tut1_error_printf(&res, "Could not enumerate devices\n");
+		goto exit_bad_enumerate;
 	}
 	else
 		printf("I detected the following %"PRIu32" device%s:\n", dev_count, dev_count == 1?"":"s");

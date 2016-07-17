@@ -23,7 +23,7 @@
 #include <assert.h>
 #include "tut4.h"
 
-VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_device *dev, struct tut3_pipelines *pipelines,
+tut1_error tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_device *dev, struct tut3_pipelines *pipelines,
 		struct tut4_data *test_data, size_t buffer_size, size_t thread_count)
 {
 	/*
@@ -71,7 +71,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	 * For now, we just want to know when each command buffer execution is finished, so we need a simple fence.
 	 */
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+	int err_no;
 	VkBufferCreateInfo buffer_info;
 	VkMemoryAllocateInfo mem_info;
 	VkDescriptorPoolCreateInfo set_pool_info;
@@ -97,7 +99,7 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		cmd_buffer_count += dev->command_pools[i].buffer_count;
 	if (cmd_buffer_count < thread_count)
 	{
-		retval = VK_ERROR_TOO_MANY_OBJECTS;
+		tut1_error_set_vkresult(&retval, VK_ERROR_TOO_MANY_OBJECTS);
 		goto exit_failed;
 	}
 
@@ -119,8 +121,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		.usage = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
 	};
 
-	retval = vkCreateBuffer(dev->device, &buffer_info, NULL, &test_data->buffer);
-	if (retval)
+	res = vkCreateBuffer(dev->device, &buffer_info, NULL, &test_data->buffer);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
@@ -149,7 +152,7 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	if (mem_index >= phy_dev->memories.memoryTypeCount)
 	{
-		retval = VK_ERROR_OUT_OF_DEVICE_MEMORY;
+		tut1_error_set_vkresult(&retval, VK_ERROR_OUT_OF_DEVICE_MEMORY);
 		goto exit_failed;
 	}
 
@@ -159,16 +162,18 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		.memoryTypeIndex = mem_index,
 	};
 
-	retval = vkAllocateMemory(dev->device, &mem_info, NULL, &test_data->buffer_mem);
-	if (retval)
+	res = vkAllocateMemory(dev->device, &mem_info, NULL, &test_data->buffer_mem);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
 	 * We have the buffer and we have the underlying memory.  Let's bind them!  The memory is used only for this
 	 * buffer, so the "offset" in memory where the buffer data resides is just 0.
 	 */
-	retval = vkBindBufferMemory(dev->device, test_data->buffer, test_data->buffer_mem, 0);
-	if (retval)
+	res = vkBindBufferMemory(dev->device, test_data->buffer, test_data->buffer_mem, 0);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
@@ -192,14 +197,15 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 		.pPoolSizes = &pool_size,
 	};
 
-	retval = vkCreateDescriptorPool(dev->device, &set_pool_info, NULL, &test_data->set_pool);
-	if (retval)
+	res = vkCreateDescriptorPool(dev->device, &set_pool_info, NULL, &test_data->set_pool);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/* See `worker_thread()` for an explanation of why a mutex is needed */
-	if (pthread_mutex_init(&test_data->cmd_pool_mutex, NULL))
+	if ((err_no = pthread_mutex_init(&test_data->cmd_pool_mutex, NULL)))
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, err_no);
 		goto exit_failed;
 	}
 
@@ -210,7 +216,7 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 	test_data->per_cmd_buffer = malloc(thread_count * sizeof *test_data->per_cmd_buffer);
 	if (test_data->per_cmd_buffer == NULL)
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, errno);
 		goto exit_failed;
 	}
 	memset(test_data->per_cmd_buffer, 0, thread_count * sizeof *test_data->per_cmd_buffer);
@@ -249,8 +255,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 			.range = (per_cmd_buffer_data->end_index - per_cmd_buffer_data->start_index) * sizeof(float),
 		};
 
-		retval = vkCreateBufferView(dev->device, &buffer_view_info, NULL, &per_cmd_buffer_data->buffer_view);
-		if (retval)
+		res = vkCreateBufferView(dev->device, &buffer_view_info, NULL, &per_cmd_buffer_data->buffer_view);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 
 		/*
@@ -269,8 +276,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 			.pSetLayouts = &pipelines->pipelines[i].set_layout,
 		};
 
-		retval = vkAllocateDescriptorSets(dev->device, &set_info, &per_cmd_buffer_data->set);
-		if (retval)
+		res = vkAllocateDescriptorSets(dev->device, &set_info, &per_cmd_buffer_data->set);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 
 		/*
@@ -312,8 +320,9 @@ VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_dev
 			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
 		};
 
-		retval = vkCreateFence(dev->device, &fence_info, NULL, &per_cmd_buffer_data->fence);
-		if (retval)
+		res = vkCreateFence(dev->device, &fence_info, NULL, &per_cmd_buffer_data->fence);
+		tut1_error_set_vkresult(&retval, res);
+		if (res)
 			goto exit_failed;
 	}
 
@@ -397,7 +406,9 @@ static void *worker_thread(void *args)
 {
 	struct tut4_per_cmd_buffer_data *per_cmd_buffer = args;
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+	int err_no;
 	VkCommandBufferBeginInfo begin_info;
 
 	/*
@@ -405,14 +416,9 @@ static void *worker_thread(void *args)
 	 * command pool synchronized between threads.  That means we can't record in parallel.  We use a mutex here to
 	 * prevent this.
 	 */
-	if (pthread_mutex_lock(per_cmd_buffer->cmd_pool_mutex))
+	if ((err_no = pthread_mutex_lock(per_cmd_buffer->cmd_pool_mutex)))
 	{
-		/*
-		 * If this fails, something has gone seriously wrong.  I can't find a VkResult for
-		 * "something horrible" ;)  This error value won't be correct either way.  The ideal case would have
-		 * been something like VK_ERROR_SEE_ERRNO.
-		 */
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, err_no);
 		goto exit_failed;
 	}
 
@@ -431,8 +437,9 @@ static void *worker_thread(void *args)
 	begin_info = (VkCommandBufferBeginInfo){
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 	};
-	retval = vkBeginCommandBuffer(per_cmd_buffer->cmd_buffer, &begin_info);
-	if (retval)
+	res = vkBeginCommandBuffer(per_cmd_buffer->cmd_buffer, &begin_info);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
@@ -493,9 +500,9 @@ static void *worker_thread(void *args)
 	/* Stop recording */
 	vkEndCommandBuffer(per_cmd_buffer->cmd_buffer);
 
-	if (pthread_mutex_unlock(per_cmd_buffer->cmd_pool_mutex))
+	if ((err_no = pthread_mutex_unlock(per_cmd_buffer->cmd_pool_mutex)))
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, err_no);
 		goto exit_failed;
 	}
 
@@ -577,7 +584,9 @@ static void *start_test(void *args)
 	 * section.  We will actually use this to make sure nothing went wrong.
 	 */
 
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+	int err_no;
 	pthread_t threads[test_data->per_cmd_buffer_count];
 	uint32_t pool_index, buffer_index;
 
@@ -589,8 +598,9 @@ static void *start_test(void *args)
 	 * is all of the memory.  The virtual address corresponding to the device address is given back.
 	 */
 	void *mem = NULL;
-	retval = vkMapMemory(test_data->dev->device, test_data->buffer_mem, 0, test_data->buffer_size * sizeof(float), 0, &mem);
-	if (retval)
+	res = vkMapMemory(test_data->dev->device, test_data->buffer_mem, 0, test_data->buffer_size * sizeof(float), 0, &mem);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	for (uint32_t i = 0; i < test_data->per_cmd_buffer_count; ++i)
@@ -622,9 +632,9 @@ static void *start_test(void *args)
 			buffer_index = 0;
 		}
 
-		if (pthread_create(&threads[i], NULL, worker_thread, &test_data->per_cmd_buffer[i]))
+		if ((err_no = pthread_create(&threads[i], NULL, worker_thread, &test_data->per_cmd_buffer[i])))
 		{
-			retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+			tut1_error_set_errno(&retval, err_no);
 			goto exit_failed;
 		}
 	}
@@ -645,8 +655,9 @@ static void *start_test(void *args)
 	VkCommandBufferBeginInfo begin_info = (VkCommandBufferBeginInfo){
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 	};
-	retval = vkBeginCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer, &begin_info);
-	if (retval)
+	res = vkBeginCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer, &begin_info);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 	VkBufferMemoryBarrier buffer_barrier = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
@@ -673,14 +684,16 @@ static void *start_test(void *args)
 	};
 	vkEndCommandBuffer(test_data->per_cmd_buffer[0].cmd_buffer);
 	vkQueueSubmit(test_data->per_cmd_buffer[0].queue, 1, &submit_info, test_data->per_cmd_buffer[0].fence);
-	retval = vkWaitForFences(test_data->dev->device, 1, &test_data->per_cmd_buffer[0].fence, true, 1000000000);
-	if (retval)
+	res = vkWaitForFences(test_data->dev->device, 1, &test_data->per_cmd_buffer[0].fence, true, 1000000000);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 	/* ... up to here */
 
 	/* And make sure they did all the computations correctly, there were no races or cache problems etc */
-	retval = vkMapMemory(test_data->dev->device, test_data->buffer_mem, 0, test_data->buffer_size * sizeof(float), 0, &mem);
-	if (retval)
+	res = vkMapMemory(test_data->dev->device, test_data->buffer_mem, 0, test_data->buffer_size * sizeof(float), 0, &mem);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	test_data->success = 1;

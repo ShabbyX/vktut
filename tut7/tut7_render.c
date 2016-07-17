@@ -22,6 +22,7 @@
 int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct tut1_physical_device *phy_dev,
 		struct tut2_device *dev, struct tut6_swapchain *swapchain)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	/* Like in Tutorial 6, take the list of swapchain images for future */
@@ -36,8 +37,9 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 	uint32_t *presentable_queues = NULL;
 	uint32_t presentable_queue_count = 0;
 
-	if (tut7_get_presentable_queues(phy_dev, dev, swapchain->surface,
-				&presentable_queues, &presentable_queue_count) || presentable_queue_count == 0)
+	retval = tut7_get_presentable_queues(phy_dev, dev, swapchain->surface,
+				&presentable_queues, &presentable_queue_count);
+	if (!tut1_error_is_success(&retval) || presentable_queue_count == 0)
 	{
 		printf("No presentable queue families!  What kind of graphics card is this!\n");
 		return -1;
@@ -53,16 +55,18 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 	};
 
 	res = vkCreateSemaphore(dev->device, &sem_info, NULL, &essentials->sem_post_acquire);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to create post-acquire semaphore: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to create post-acquire semaphore\n");
 		return -1;
 	}
 
 	res = vkCreateSemaphore(dev->device, &sem_info, NULL, &essentials->sem_pre_submit);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to create pre-submit semaphore: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to create pre-submit semaphore\n");
 		return -1;
 	}
 
@@ -72,9 +76,10 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 	};
 
 	res = vkCreateFence(dev->device, &fence_info, NULL, &essentials->exec_fence);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to create fence: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to create fence\n");
 		return -1;
 	}
 
@@ -96,11 +101,13 @@ void tut7_render_cleanup_essentials(struct tut7_render_essentials *essentials, s
 int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_device *dev,
 		struct tut6_swapchain *swapchain, VkImageLayout to_layout, uint32_t *image_index)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	/* Use `vkAcquireNextImageKHR` to get an image to render to */
 
 	res = vkAcquireNextImageKHR(dev->device, swapchain->swapchain, 1000000000, essentials->sem_post_acquire, NULL, image_index);
+	tut1_error_set_vkresult(&retval, res);
 	if (res == VK_TIMEOUT)
 	{
 		printf("A whole second and no image.  I give up.\n");
@@ -111,7 +118,7 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 				"so the presentation is now suboptimal.\n");
 	else if (res < 0)
 	{
-		printf("Couldn't acquire image: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Couldn't acquire image\n");
 		return -1;
 	}
 
@@ -125,9 +132,10 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 	if (!essentials->first_render)
 	{
 		res = vkWaitForFences(dev->device, 1, &essentials->exec_fence, true, 1000000000);
+		tut1_error_set_vkresult(&retval, res);
 		if (res)
 		{
-			printf("Wait for fence failed: %s\n", tut1_VkResult_string(res));
+			tut1_error_printf(&retval, "Wait for fence failed\n");
 			return -1;
 		}
 	}
@@ -148,9 +156,10 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 	};
 	res = vkBeginCommandBuffer(essentials->cmd_buffer, &begin_info);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Couldn't even begin recording a command buffer: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Couldn't even begin recording a command buffer\n");
 		return -1;
 	}
 
@@ -249,6 +258,7 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 int tut7_render_finish(struct tut7_render_essentials *essentials, struct tut2_device *dev,
 		struct tut6_swapchain *swapchain, VkImageLayout from_layout, uint32_t image_index)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	/* The second memory barrier is similar to the first (in tut7_render_start), but inverted */
@@ -290,9 +300,10 @@ int tut7_render_finish(struct tut7_render_essentials *essentials, struct tut2_de
 	vkEndCommandBuffer(essentials->cmd_buffer);
 
 	res = vkResetFences(dev->device, 1, &essentials->exec_fence);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Failed to reset fence: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to reset fence\n");
 		return res;
 	}
 
@@ -329,9 +340,10 @@ int tut7_render_finish(struct tut7_render_essentials *essentials, struct tut2_de
 		.pImageIndices = &image_index,
 	};
 	res = vkQueuePresentKHR(essentials->present_queue, &present_info);
+	tut1_error_set_vkresult(&retval, res);
 	if (res < 0)
 	{
-		printf("Failed to queue image for presentation\n");
+		tut1_error_printf(&retval, "Failed to queue image for presentation\n");
 		return -1;
 	}
 

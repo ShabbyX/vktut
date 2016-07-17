@@ -19,8 +19,11 @@
 
 #include "tut1.h"
 
-VkResult tut1_init(VkInstance *vk)
+tut1_error tut1_init(VkInstance *vk)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+
 	/*
 	 * Vulkan is not just for graphics.  As the slogan goes, graphics and computation belong together.  As a
 	 * result, initialization in Vulkan is rather verbose to allow the application to adapt to a wide set of
@@ -83,7 +86,10 @@ VkResult tut1_init(VkInstance *vk)
 	 * embedded systems debugging or logging.  Using custom allocation functions will be explored in a future
 	 * tutorial.
 	 */
-	return vkCreateInstance(&info, NULL, vk);
+	res = vkCreateInstance(&info, NULL, vk);
+	tut1_error_set_vkresult(&retval, res);
+
+	return retval;
 }
 
 void tut1_exit(VkInstance vk)
@@ -99,10 +105,11 @@ void tut1_exit(VkInstance vk)
 	vkDestroyInstance(vk, NULL);
 }
 
-VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count)
+tut1_error tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count)
 {
 	VkPhysicalDevice phy_devs[*count];
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	/*
 	 * A physical device in Vulkan is any actual device with Vulkan capabilities.  For example, a physical GPU is
@@ -119,8 +126,9 @@ VkResult tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs
 	 * can't be _that_ many devices and use a fixed upper bound.  If there are more devices than I foresaw, then
 	 * VK_INCOMPLETE would be returned, stating that the array doesn't contain all that there is.
 	 */
-	retval = vkEnumeratePhysicalDevices(vk, count, phy_devs);
-	if (retval < 0)
+	res = vkEnumeratePhysicalDevices(vk, count, phy_devs);
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 
 	for (uint32_t i = 0; i < *count; ++i)

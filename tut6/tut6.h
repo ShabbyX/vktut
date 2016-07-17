@@ -63,13 +63,13 @@ struct tut6_swapchain
 	uint32_t present_modes_count;
 };
 
-VkResult tut6_init_ext(VkInstance *vk, const char *ext_names[], uint32_t ext_count);
-VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut6_init_ext(VkInstance *vk, const char *ext_names[], uint32_t ext_count);
+tut1_error tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count,
 		const char *ext_names[], uint32_t ext_count);
 
 /* This tutorial replaces tut1_init and tut2_get_dev with versions that enable WSI extensions */
-static inline VkResult tut6_init(VkInstance *vk)
+static inline tut1_error tut6_init(VkInstance *vk)
 {
 	/*
 	 * In Tutorial 5, we enabled all layers and extensions there were, which is not really the way things should be
@@ -85,7 +85,7 @@ static inline VkResult tut6_init(VkInstance *vk)
 	};
 	return tut6_init_ext(vk, extension_names, sizeof extension_names / sizeof *extension_names);
 }
-static inline VkResult tut6_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+static inline tut1_error tut6_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count)
 {
 	/*
@@ -102,18 +102,18 @@ static inline VkResult tut6_get_dev(struct tut1_physical_device *phy_dev, struct
 			sizeof extension_names / sizeof *extension_names);
 }
 
-static inline VkResult tut6_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
+static inline tut1_error tut6_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
 {
 	VkDeviceQueueCreateInfo queue_info[phy_dev->queue_family_count];
 	uint32_t queue_info_count = phy_dev->queue_family_count;
 
-	VkResult res = tut6_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
-	if (res == 0)
+	tut1_error res = tut6_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
+	if (tut1_error_is_success(&res))
 		res = tut2_get_commands(phy_dev, dev, queue_info, queue_info_count);
 	return res;
 }
 
-VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count, bool allow_no_vsync);
 void tut6_free_swapchain(VkInstance vk, struct tut2_device *dev, struct tut6_swapchain *swapchain);
 

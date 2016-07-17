@@ -87,9 +87,10 @@ struct render_data
 	VkDescriptorSet desc_set;
 };
 
-static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut6_swapchain *swapchain, struct tut7_render_essentials *essentials, struct render_data *render_data)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	/*
@@ -148,11 +149,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 		.host_visible = true,
 	};
 
-	res = tut7_create_buffers(phy_dev, dev, render_data->buffers, 3);
-	if (res)
+	retval = tut7_create_buffers(phy_dev, dev, render_data->buffers, 3);
+	if (!tut1_error_is_success(&retval))
 	{
-		printf("Failed to create vertex and transformation buffers: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Failed to create vertex and transformation buffers\n");
+		return retval;
 	}
 
 	/* Let's define our triangle.  Simple stuff. */
@@ -174,21 +175,21 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 	 * Now we need to copy our data over to the buffer memories.  We saw how this was done in Tutorial 4; map the
 	 * memory, write the contents, unmap the memory.
 	 */
-	res = tut8_render_fill_buffer(dev, &render_data->buffers[BUFFER_VERTICES_STAGING], render_data->vertices, sizeof render_data->vertices, "staging vertex");
-	if (res)
-		return res;
-	res = tut8_render_fill_buffer(dev, &render_data->buffers[BUFFER_TRANSFORMATION], &render_data->transformation, sizeof render_data->transformation, "transformation");
-	if (res)
-		return res;
+	retval = tut8_render_fill_buffer(dev, &render_data->buffers[BUFFER_VERTICES_STAGING], render_data->vertices, sizeof render_data->vertices, "staging vertex");
+	if (!tut1_error_is_success(&retval))
+		return retval;
+	retval = tut8_render_fill_buffer(dev, &render_data->buffers[BUFFER_TRANSFORMATION], &render_data->transformation, sizeof render_data->transformation, "transformation");
+	if (!tut1_error_is_success(&retval))
+		return retval;
 
 	/*
 	 * As a special case with the vertex buffer, we should copy over the data from the staging buffer to the one we
 	 * are actually going to use, and then destroy the staging buffer.
 	 */
-	res = tut8_render_copy_buffer(dev, essentials, &render_data->buffers[BUFFER_VERTICES], &render_data->buffers[BUFFER_VERTICES_STAGING],
+	retval = tut8_render_copy_buffer(dev, essentials, &render_data->buffers[BUFFER_VERTICES], &render_data->buffers[BUFFER_VERTICES_STAGING],
 			sizeof render_data->vertices, "vertex");
-	if (res)
-		return res;
+	if (!tut1_error_is_success(&retval))
+		return retval;
 	/*
 	 * TODO: This buffer doesn't have a view, so it's buffer view object is NULL.  Enable this after the NVidia
 	 * driver fixes its bug with handling NULL pointers.
@@ -209,11 +210,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 		.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
 	};
 
-	res = tut7_load_shaders(dev, render_data->shaders, 2);
-	if (res)
+	retval = tut7_load_shaders(dev, render_data->shaders, 2);
+	if (!tut1_error_is_success(&retval))
 	{
-		printf("Could not load the shaders (expected location: ../shaders): %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Could not load the shaders (expected location: ../shaders)\n");
+		return retval;
 	}
 
 	/*
@@ -227,11 +228,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 			.swapchain_image = essentials->images[i],
 		};
 
-	res = tut7_create_graphics_buffers(phy_dev, dev, swapchain->surface_format, render_data->gbuffers, essentials->image_count, &render_data->render_pass);
-	if (res)
+	retval = tut7_create_graphics_buffers(phy_dev, dev, swapchain->surface_format, render_data->gbuffers, essentials->image_count, &render_data->render_pass);
+	if (!tut1_error_is_success(&retval))
 	{
-		printf("Could not create graphics buffers: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Could not create graphics buffers\n");
+		return retval;
 	}
 
 	/*
@@ -240,11 +241,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 	 */
 	for (uint32_t i = 0; i < essentials->image_count; ++i)
 	{
-		res = tut8_render_transition_images(dev, essentials, &render_data->gbuffers[i].depth, 1,
+		retval = tut8_render_transition_images(dev, essentials, &render_data->gbuffers[i].depth, 1,
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, "depth");
-		if (res)
-			return res;
+		if (!tut1_error_is_success(&retval))
+			return retval;
 	}
 
 	/*
@@ -264,11 +265,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 	render_data->layout = (struct tut8_layout){
 		.resources = &resources,
 	};
-	res = tut8_make_graphics_layouts(dev, &render_data->layout, 1);
-	if (res)
+	retval = tut8_make_graphics_layouts(dev, &render_data->layout, 1);
+	if (!tut1_error_is_success(&retval))
 	{
-		printf("Could not create descriptor set or pipeline layouts: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Could not create descriptor set or pipeline layouts\n");
+		return retval;
 	}
 
 	/*
@@ -325,11 +326,11 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 		.thread_count = 1,
 	};
 
-	res = tut8_make_graphics_pipelines(dev, &render_data->pipeline, 1);
-	if (res)
+	retval = tut8_make_graphics_pipelines(dev, &render_data->pipeline, 1);
+	if (!tut1_error_is_success(&retval))
 	{
-		printf("Could not create graphics pipeline: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Could not create graphics pipeline\n");
+		return retval;
 	}
 
 	/*
@@ -343,10 +344,12 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 		.pSetLayouts = &render_data->layout.set_layout,
 	};
 	res = vkAllocateDescriptorSets(dev->device, &set_info, &render_data->desc_set);
+	retval = TUT1_ERROR_NONE;
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		printf("Could not allocate descriptor set from pool: %s\n", tut1_VkResult_string(res));
-		return res;
+		tut1_error_printf(&retval, "Could not allocate descriptor set from pool\n");
+		return retval;
 	}
 
 	VkDescriptorBufferInfo set_write_buffer_info = {
@@ -373,7 +376,7 @@ static VkResult allocate_render_data(struct tut1_physical_device *phy_dev, struc
 	 * Let's head over to render_loop() and do this!
 	 */
 
-	return 0;
+	return retval;
 }
 
 static void free_render_data(struct tut2_device *dev, struct tut7_render_essentials *essentials, struct render_data *render_data)
@@ -392,6 +395,7 @@ static void free_render_data(struct tut2_device *dev, struct tut7_render_essenti
 static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device *dev, struct tut6_swapchain *swapchain)
 {
 	int res;
+	tut1_error retval = TUT1_ERROR_NONE;
 	struct tut7_render_essentials essentials;
 
 	struct render_data render_data = { .gbuffers = NULL, };
@@ -402,8 +406,8 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		goto exit_bad_essentials;
 
 	/* Allocate buffers and load shaders for the rendering in this tutorial */
-	res = allocate_render_data(phy_dev, dev, swapchain, &essentials, &render_data);
-	if (res)
+	retval = allocate_render_data(phy_dev, dev, swapchain, &essentials, &render_data);
+	if (!tut1_error_is_success(&retval))
 		goto exit_bad_render_data;
 
 	unsigned int frames = 0;
@@ -553,7 +557,7 @@ exit_bad_essentials:
 
 int main(int argc, char **argv)
 {
-	VkResult res;
+	tut1_error res;
 	int retval = EXIT_FAILURE;
 	VkInstance vk;
 	/*
@@ -582,17 +586,17 @@ int main(int argc, char **argv)
 
 	/* Fire up Vulkan */
 	res = tut6_init(&vk);
-	if (res)
+	if (!tut1_error_is_success(&res))
 	{
-		printf("Could not initialize Vulkan: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not initialize Vulkan\n");
 		goto exit_bad_init;
 	}
 
 	/* Enumerate devices */
 	res = tut1_enumerate_devices(vk, &phy_dev, &dev_count);
-	if (res < 0)
+	if (tut1_error_is_error(&res))
 	{
-		printf("Could not enumerate devices: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not enumerate devices\n");
 		goto exit_bad_enumerate;
 	}
 
@@ -604,9 +608,9 @@ int main(int argc, char **argv)
 
 	/* Get logical devices and enable WSI extensions */
 	res = tut6_setup(&phy_dev, &dev, VK_QUEUE_GRAPHICS_BIT);
-	if (res < 0)
+	if (tut1_error_is_error(&res))
 	{
-		printf("Could not setup logical device, command pools and queues: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not setup logical device, command pools and queues\n");
 		goto exit_bad_setup;
 	}
 
@@ -628,9 +632,9 @@ int main(int argc, char **argv)
 
 	/* Still 1 thread for now (the current thread) */
 	res = tut6_get_swapchain(vk, &phy_dev, &dev, &swapchain, window, 1, no_vsync);
-	if (res)
+	if (tut1_error_is_error(&res))
 	{
-		printf("Could not create surface and swapchain: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&res, "Could not create surface and swapchain\n");
 		goto exit_bad_swapchain;
 	}
 

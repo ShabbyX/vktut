@@ -24,20 +24,20 @@
 #include "../tut2/tut2.h"
 
 /* This tutorial replaces tut1_init and tut2_get_dev with versions that enable layers and extensions */
-VkResult tut5_init(VkInstance *vk);
-VkResult tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut5_init(VkInstance *vk);
+tut1_error tut5_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count);
 
 void tut5_print_layers_and_extensions(void);
 void tut5_print_device_layers_and_extensions(struct tut1_physical_device *phy_dev);
 
-static inline VkResult tut5_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
+static inline tut1_error tut5_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
 {
 	VkDeviceQueueCreateInfo queue_info[phy_dev->queue_family_count];
 	uint32_t queue_info_count = phy_dev->queue_family_count;
 
-	VkResult res = tut5_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
-	if (res == 0)
+	tut1_error res = tut5_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
+	if (tut1_error_is_success(&res))
 		res = tut2_get_commands(phy_dev, dev, queue_info, queue_info_count);
 	return res;
 }

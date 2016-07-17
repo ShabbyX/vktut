@@ -23,8 +23,11 @@
 #include <X11/Xlib-xcb.h>
 #include "tut6.h"
 
-VkResult tut6_init_ext(VkInstance *vk, const char *ext_names[], uint32_t ext_count)
+tut1_error tut6_init_ext(VkInstance *vk, const char *ext_names[], uint32_t ext_count)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+
 	/* This function once again, but with a possibility to enable extensions */
 	VkApplicationInfo app_info = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -43,13 +46,19 @@ VkResult tut6_init_ext(VkInstance *vk, const char *ext_names[], uint32_t ext_cou
 		.ppEnabledExtensionNames = ext_names,
 	};
 
-	return vkCreateInstance(&info, NULL, vk);
+	res = vkCreateInstance(&info, NULL, vk);
+	tut1_error_set_vkresult(&retval, res);
+
+	return retval;
 }
 
-VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count,
 		const char *ext_names[], uint32_t ext_count)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+
 	/* Here is to hoping we don't have to redo this function again ;) */
 	*dev = (struct tut2_device){0};
 
@@ -80,7 +89,10 @@ VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_devi
 
 	/* If there are no compatible queues, there is little one can do here */
 	if (*queue_info_count == 0)
-		return VK_ERROR_FEATURE_NOT_PRESENT;
+	{
+		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
+		goto exit_failed;
+	}
 
 	VkDeviceCreateInfo dev_info = {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -91,10 +103,14 @@ VkResult tut6_get_dev_ext(struct tut1_physical_device *phy_dev, struct tut2_devi
 		.pEnabledFeatures = &phy_dev->features,
 	};
 
-	return vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	res = vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	tut1_error_set_vkresult(&retval, res);
+
+exit_failed:
+	return retval;
 }
 
-VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut6_swapchain *swapchain, SDL_Window *window, uint32_t thread_count, bool allow_no_vsync)
 {
 	/*
@@ -105,7 +121,8 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 * almost everything.
 	 */
 	SDL_SysWMinfo wm;
-	VkResult retval;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	*swapchain = (struct tut6_swapchain){0};
 
@@ -113,13 +130,15 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	if (!SDL_GetWindowWMInfo(window, &wm))
 	{
 		printf("Failed to get WM info from SDL: %s\n", SDL_GetError());
-		return VK_ERROR_INITIALIZATION_FAILED;
+		tut1_error_set_vkresult(&retval, VK_ERROR_INITIALIZATION_FAILED);
+		goto exit_failed;
 	}
 
 	if (wm.subsystem != SDL_SYSWM_X11)
 	{
 		printf("Window manager not yet supported by this tutorial\n");
-		return VK_ERROR_FEATURE_NOT_PRESENT;
+		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
+		goto exit_failed;
 	}
 
 	/*
@@ -149,8 +168,9 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 * This is it.  This function (and its create info struct) are all the platform-specific code you would need
 	 * to get Vulkan to render something on the screen.
 	 */
-	retval = vkCreateXcbSurfaceKHR(vk, &surface_info, NULL, &swapchain->surface);
-	if (retval)
+	res = vkCreateXcbSurfaceKHR(vk, &surface_info, NULL, &swapchain->surface);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
@@ -167,8 +187,9 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 * application.  You would have to take care of doing that.  For now, we are going to ignore window resizes,
 	 * but we may revisit this in a future tutorial.
 	 */
-	retval = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phy_dev->physical_device, swapchain->surface, &swapchain->surface_caps);
-	if (retval)
+	res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phy_dev->physical_device, swapchain->surface, &swapchain->surface_caps);
+	tut1_error_set_vkresult(&retval, res);
+	if (res)
 		goto exit_failed;
 
 	/*
@@ -214,8 +235,9 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	 *     }
 	 */
 	uint32_t surface_format_count = 1;
-	retval = vkGetPhysicalDeviceSurfaceFormatsKHR(phy_dev->physical_device, swapchain->surface, &surface_format_count, &swapchain->surface_format);
-	if (retval < 0)
+	res = vkGetPhysicalDeviceSurfaceFormatsKHR(phy_dev->physical_device, swapchain->surface, &surface_format_count, &swapchain->surface_format);
+	tut1_error_set_vkresult(&retval, res);
+	if (res < 0)
 		goto exit_failed;
 
 	if (surface_format_count == 1 && swapchain->surface_format.format == VK_FORMAT_UNDEFINED)
@@ -247,9 +269,10 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	swapchain->present_modes_count = TUT6_MAX_PRESENT_MODES;
 	VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
-	retval = vkGetPhysicalDeviceSurfacePresentModesKHR(phy_dev->physical_device, swapchain->surface,
+	res = vkGetPhysicalDeviceSurfacePresentModesKHR(phy_dev->physical_device, swapchain->surface,
 			&swapchain->present_modes_count, swapchain->present_modes);
-	if (retval >= 0)
+	tut1_error_set_vkresult(&retval, res);
+	if (res >= 0)
 	{
 		for (uint32_t i = 0; i < swapchain->present_modes_count; ++i)
 		{
@@ -332,9 +355,8 @@ VkResult tut6_get_swapchain(VkInstance vk, struct tut1_physical_device *phy_dev,
 	};
 
 	/* Finally, create the swapchain.  The usual pattern, with no memory allocation callbacks */
-	retval = vkCreateSwapchainKHR(dev->device, &swapchain_info, NULL, &swapchain->swapchain);
-	if (retval)
-		goto exit_failed;
+	res = vkCreateSwapchainKHR(dev->device, &swapchain_info, NULL, &swapchain->swapchain);
+	tut1_error_set_vkresult(&retval, res);
 
 exit_failed:
 	return retval;
@@ -435,6 +457,7 @@ void tut6_print_surface_capabilities(struct tut6_swapchain *swapchain)
 
 VkImage *tut6_get_swapchain_images(struct tut2_device *dev, struct tut6_swapchain *swapchain, uint32_t *count)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
 	/*
@@ -443,9 +466,10 @@ VkImage *tut6_get_swapchain_images(struct tut2_device *dev, struct tut6_swapchai
 	 */
 	uint32_t image_count;
 	res = vkGetSwapchainImagesKHR(dev->device, swapchain->swapchain, &image_count, NULL);
+	tut1_error_set_vkresult(&retval, res);
 	if (res < 0)
 	{
-		printf("Failed to count the number of images in swapchain: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to count the number of images in swapchain\n");
 		return NULL;
 	}
 
@@ -457,9 +481,10 @@ VkImage *tut6_get_swapchain_images(struct tut2_device *dev, struct tut6_swapchai
 	}
 
 	res = vkGetSwapchainImagesKHR(dev->device, swapchain->swapchain, &image_count, images);
+	tut1_error_set_vkresult(&retval, res);
 	if (res < 0)
 	{
-		printf("Failed to get the images in swapchain: %s\n", tut1_VkResult_string(res));
+		tut1_error_printf(&retval, "Failed to get the images in swapchain\n");
 		return NULL;
 	}
 

@@ -40,17 +40,17 @@ struct tut2_device
 	uint32_t command_pool_count;
 };
 
-VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count);
-VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count);
+tut1_error tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count);
 
-static inline VkResult tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
+static inline tut1_error tut2_setup(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags)
 {
 	VkDeviceQueueCreateInfo queue_info[phy_dev->queue_family_count];
 	uint32_t queue_info_count = phy_dev->queue_family_count;
 
-	VkResult res = tut2_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
-	if (res == 0)
+	tut1_error res = tut2_get_dev(phy_dev, dev, qflags, queue_info, &queue_info_count);
+	if (tut1_error_is_success(&res))
 		res = tut2_get_commands(phy_dev, dev, queue_info, queue_info_count);
 	return res;
 }

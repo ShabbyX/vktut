@@ -21,7 +21,7 @@
 #include <string.h>
 #include "tut7.h"
 
-VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut7_image *images, uint32_t image_count)
 {
 	/*
@@ -48,11 +48,11 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 	 * that in this function either.
 	 */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	for (uint32_t i = 0; i < image_count; ++i)
 	{
-		VkResult res;
-
 		images[i].image = NULL;
 		images[i].image_mem = NULL;
 		images[i].view = NULL;
@@ -159,6 +159,7 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 			VkImageFormatProperties format_properties;
 			res = vkGetPhysicalDeviceImageFormatProperties(phy_dev->physical_device, images[i].format, VK_IMAGE_TYPE_2D,
 					tiling, images[i].usage, 0, &format_properties);
+			tut1_error_sub_set_vkresult(&retval, res);
 			if (res == 0)
 			{
 				for (uint32_t s = VK_SAMPLE_COUNT_16_BIT; s != 0; s >>= 1)
@@ -191,6 +192,7 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 			.initialLayout = layout,
 		};
 		res = vkCreateImage(dev->device, &image_info, NULL, &images[i].image);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -216,10 +218,12 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 		};
 
 		res = vkAllocateMemory(dev->device, &mem_info, NULL, &images[i].image_mem);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
 		res = vkBindImageMemory(dev->device, images[i].image, images[i].image_mem, 0);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -265,6 +269,7 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 		};
 
 		res = vkCreateImageView(dev->device, &view_info, NULL, &images[i].view);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -345,6 +350,7 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 			};
 
 			res = vkCreateSampler(dev->device, &sampler_info, NULL, &images[i].sampler);
+			tut1_error_sub_set_vkresult(&retval, res);
 			if (res)
 				continue;
 		}
@@ -359,19 +365,20 @@ VkResult tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_de
 	 * properties and restrictions of the swapchain images better.
 	 */
 
-	return successful == image_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == image_count?VK_SUCCESS:VK_INCOMPLETE);
+	return retval;
 }
 
-VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		struct tut7_buffer *buffers, uint32_t buffer_count)
 {
 	/* We have already seen buffer create in Tutorial 4, so we'll go over this quickly. */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	for (uint32_t i = 0; i < buffer_count; ++i)
 	{
-		VkResult res;
-
 		buffers[i].buffer = NULL;
 		buffers[i].buffer_mem = NULL;
 		buffers[i].view = NULL;
@@ -395,6 +402,7 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 			.pQueueFamilyIndices = shared?buffers[i].sharing_queues:NULL,
 		};
 		res = vkCreateBuffer(dev->device, &buffer_info, NULL, &buffers[i].buffer);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -414,10 +422,12 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 		};
 
 		res = vkAllocateMemory(dev->device, &mem_info, NULL, &buffers[i].buffer_mem);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
 		res = vkBindBufferMemory(dev->device, buffers[i].buffer, buffers[i].buffer_mem, 0);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -433,6 +443,7 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 			};
 
 			res = vkCreateBufferView(dev->device, &view_info, NULL, &buffers[i].view);
+			tut1_error_sub_set_vkresult(&retval, res);
 			if (res)
 				continue;
 		}
@@ -440,10 +451,11 @@ VkResult tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2_d
 		++successful;
 	}
 
-	return successful == buffer_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == buffer_count?VK_SUCCESS:VK_INCOMPLETE);
+	return retval;
 }
 
-VkResult tut7_load_shaders(struct tut2_device *dev,
+tut1_error tut7_load_shaders(struct tut2_device *dev,
 		struct tut7_shader *shaders, uint32_t shader_count)
 {
 	/*
@@ -451,20 +463,24 @@ VkResult tut7_load_shaders(struct tut2_device *dev,
 	 * fancy here.
 	 */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
+	tut1_error err;
 
 	for (uint32_t i = 0; i < shader_count; ++i)
 	{
-		VkResult res = tut3_load_shader(dev, shaders[i].spirv_file, &shaders[i].shader);
-		if (res)
+		err = tut3_load_shader(dev, shaders[i].spirv_file, &shaders[i].shader);
+		tut1_error_sub_merge(&retval, &err);
+		if (!tut1_error_is_success(&err))
 			continue;
 
 		++successful;
 	}
 
-	return successful == shader_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == shader_count?VK_SUCCESS:VK_INCOMPLETE);
+	return retval;
 }
 
-VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		VkSurfaceFormatKHR surface_format,
 		struct tut7_graphics_buffers *graphics_buffers, uint32_t graphics_buffer_count, VkRenderPass *render_pass)
 {
@@ -496,7 +512,9 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 	 * the swapchain.
 	 */
 	uint32_t successful = 0;
+	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
+	tut1_error err;
 
 	for (uint32_t i = 0; i < graphics_buffer_count; ++i)
 	{
@@ -548,7 +566,10 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 	 * format was found!
 	 */
 	if (selected_format == VK_FORMAT_UNDEFINED)
-		return VK_ERROR_FEATURE_NOT_PRESENT;
+	{
+		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
+		goto exit_failed;
+	}
 
 	/*
 	 * Since the render buffer just defines how the attachments look like, we need only one for use with all of our
@@ -634,8 +655,9 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 	};
 
 	res = vkCreateRenderPass(dev->device, &render_pass_info, NULL, render_pass);
+	tut1_error_set_vkresult(&retval, res);
 	if (res)
-		return res;
+		goto exit_failed;
 
 	for (uint32_t i = 0; i < graphics_buffer_count; ++i)
 	{
@@ -659,6 +681,7 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 		};
 
 		res = vkCreateImageView(dev->device, &view_info, NULL, &graphics_buffers[i].color_view);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
@@ -687,8 +710,9 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 			.will_be_initialized = false,
 		};
 
-		res = tut7_create_images(phy_dev, dev, &graphics_buffers[i].depth, 1);
-		if (res)
+		err = tut7_create_images(phy_dev, dev, &graphics_buffers[i].depth, 1);
+		tut1_error_sub_merge(&retval, &err);
+		if (!tut1_error_is_success(&err))
 			continue;
 
 		/*
@@ -711,16 +735,19 @@ VkResult tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, stru
 		};
 
 		res = vkCreateFramebuffer(dev->device, &framebuffer_info, NULL, &graphics_buffers[i].framebuffer);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res)
 			continue;
 
 		++successful;
 	}
 
-	return successful == graphics_buffer_count?VK_SUCCESS:VK_INCOMPLETE;
+	tut1_error_set_vkresult(&retval, successful == graphics_buffer_count?VK_SUCCESS:VK_INCOMPLETE);
+exit_failed:
+	return retval;
 }
 
-VkResult tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
+tut1_error tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struct tut2_device *dev,
 		VkSurfaceKHR surface, uint32_t **presentable_queues, uint32_t *presentable_queue_count)
 {
 	/*
@@ -735,13 +762,22 @@ VkResult tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struc
 	 * with the driver.  The LUNARG_swapchain validation layer actually complains about this, so TODO: move this
 	 * to Tutorial 6 and call it before creating the swapchain.
 	 */
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+
 	*presentable_queues = malloc(dev->command_pool_count * sizeof **presentable_queues);
+	if (*presentable_queues == NULL)
+	{
+		tut1_error_set_errno(&retval, errno);
+		goto exit_failed;
+	}
 	*presentable_queue_count = 0;
 
 	for (uint32_t i = 0; i < dev->command_pool_count; ++i)
 	{
 		VkBool32 supports = false;
-		VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(phy_dev->physical_device, i, surface, &supports);
+		res = vkGetPhysicalDeviceSurfaceSupportKHR(phy_dev->physical_device, i, surface, &supports);
+		tut1_error_sub_set_vkresult(&retval, res);
 		if (res || !supports)
 			continue;
 
@@ -753,10 +789,11 @@ VkResult tut7_get_presentable_queues(struct tut1_physical_device *phy_dev, struc
 	{
 		free(*presentable_queues);
 		*presentable_queues = NULL;
-		return VK_ERROR_INCOMPATIBLE_DRIVER;
 	}
 
-	return VK_SUCCESS;
+	tut1_error_set_vkresult(&retval, *presentable_queue_count == 0?VK_ERROR_INCOMPATIBLE_DRIVER:VK_SUCCESS);
+exit_failed:
+	return retval;
 }
 
 void tut7_free_images(struct tut2_device *dev, struct tut7_image *images, uint32_t image_count)

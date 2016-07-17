@@ -35,10 +35,10 @@ struct tut3_pipelines
 	uint32_t pipeline_count;
 };
 
-VkResult tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkShaderModule *shader);
+tut1_error tut3_load_shader(struct tut2_device *dev, const char *spirv_file, VkShaderModule *shader);
 void tut3_free_shader(struct tut2_device *dev, VkShaderModule shader);
 
-VkResult tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelines *pipeline, VkShaderModule shader);
+tut1_error tut3_make_compute_pipeline(struct tut2_device *dev, struct tut3_pipelines *pipeline, VkShaderModule shader);
 void tut3_destroy_pipeline(struct tut2_device *dev, struct tut3_pipelines *pipelines);
 
 #endif

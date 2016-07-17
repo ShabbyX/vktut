@@ -21,9 +21,12 @@
 #include <string.h>
 #include "tut2.h"
 
-VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
+tut1_error tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkQueueFlags qflags,
 		VkDeviceQueueCreateInfo queue_info[], uint32_t *queue_info_count)
 {
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
+
 	/*
 	 * A Vulkan logical device is a connection to a physical device, which is used to interact with that device.
 	 * In Tutorial 1, we gathered information regarding the physical device.  Now, we want to actually do something
@@ -75,7 +78,10 @@ VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 
 	/* If there are no compatible queues, there is little one can do here */
 	if (*queue_info_count == 0)
-		return VK_ERROR_FEATURE_NOT_PRESENT;
+	{
+		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
+		goto exit_failed;
+	}
 
 	/*
 	 * The VkDeviceCreateInfo asks for resources in the driver to be dedicated to the application.  We already saw
@@ -105,12 +111,17 @@ VkResult tut2_get_dev(struct tut1_physical_device *phy_dev, struct tut2_device *
 	 * vkCreateDevice is no exception.  We are not yet using custom memory allocation functions, so they are
 	 * unused.  The rest is already explained.
 	 */
-	return vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	res = vkCreateDevice(phy_dev->physical_device, &dev_info, NULL, &dev->device);
+	tut1_error_set_vkresult(&retval, res);
+
+exit_failed:
+	return retval;
 }
 
-VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count)
+tut1_error tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_device *dev, VkDeviceQueueCreateInfo queue_info[], uint32_t queue_info_count)
 {
-	VkResult retval = 0, res;
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	/*
 	 * Now that we have a device handle, we can start talking with it using command buffers.  A command buffer is
@@ -127,9 +138,10 @@ VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_dev
 	dev->command_pools = malloc(queue_info_count * sizeof *dev->command_pools);
 	if (dev->command_pools == NULL)
 	{
-		retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+		tut1_error_set_errno(&retval, errno);
 		goto exit_failed;
 	}
+
 	for (uint32_t i = 0; i < queue_info_count; ++i)
 	{
 		struct tut2_commands *cmd = &dev->command_pools[i];
@@ -158,11 +170,9 @@ VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_dev
 
 		/* Does this start to look familiar? */
 		res = vkCreateCommandPool(dev->device, &pool_info, NULL, &cmd->pool);
+		tut1_error_set_vkresult(&retval, res);
 		if (res < 0)
-		{
-			retval = res;
 			goto exit_failed;
-		}
 		++dev->command_pool_count;
 
 		/*
@@ -179,7 +189,7 @@ VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_dev
 		cmd->buffers = malloc(queue_info[i].queueCount * sizeof *cmd->buffers);
 		if (cmd->queues == NULL || cmd->buffers == NULL)
 		{
-			retval = VK_ERROR_OUT_OF_HOST_MEMORY;
+			tut1_error_set_errno(&retval, errno);
 			goto exit_failed;
 		}
 
@@ -218,11 +228,10 @@ VkResult tut2_get_commands(struct tut1_physical_device *phy_dev, struct tut2_dev
 		 * being made from already took these callbacks!
 		 */
 		res = vkAllocateCommandBuffers(dev->device, &buffer_info, cmd->buffers);
+		tut1_error_set_vkresult(&retval, res);
 		if (res)
-		{
-			retval = res;
 			goto exit_failed;
-		}
+
 		cmd->buffer_count = queue_info[i].queueCount;
 	}
 

@@ -42,7 +42,7 @@ struct tut4_per_cmd_buffer_data
 	uint64_t busy_time_ns;
 
 	int success;
-	VkResult error;
+	tut1_error error;
 };
 
 struct tut4_data
@@ -64,10 +64,10 @@ struct tut4_data
 	pthread_t test_thread;
 
 	int success;
-	VkResult error;
+	tut1_error error;
 };
 
-VkResult tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_device *dev, struct tut3_pipelines *pipelines,
+tut1_error tut4_prepare_test(struct tut1_physical_device *phy_dev, struct tut2_device *dev, struct tut3_pipelines *pipelines,
 		struct tut4_data *test_data, size_t buffer_size, size_t thread_count);
 void tut4_free_test(struct tut2_device *dev, struct tut4_data *test_data);
 
