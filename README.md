@@ -52,7 +52,7 @@ environment:
 export VULKAN_SDK=/path/to/vulkan/arch
 ```
 
-Or run `configure` file this environment:
+Or run `configure` file with this environment:
 
 ```
 VULKAN_SDK=/path/to/vulkan/arch ../configure
