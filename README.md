@@ -38,8 +38,22 @@ tarball, you can go through the usual procedure:
 
 ```
 mkdir build && cd build
-../configure
+../configure --enable-silent-rules
 make -j
+```
+
+If your Vulkan SDK installation is not in the standard locations, you would
+need to have the `VULKAN_SDK` variable set, for example set it in your
+environment:
+
+```
+export VULKAN_SDK=/path/to/vulkan/arch
+```
+
+Or run `configure` file this environment:
+
+```
+VULKAN_SDK=/path/to/vulkan/arch ../configure
 ```
 
 If you are building from source, you would need autotools installed as well as

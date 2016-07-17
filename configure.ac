@@ -40,9 +40,10 @@ AX_PTHREAD([
 
 # Now that the basics are checked, make sure vulkan is installed
 AS_IF([test x"$VULKAN_SDK" != x], [
-  CPPFLAGS="$CPPFLAGS -I$VULKAN_SDK/include"
-  LDFLAGS="$LDFLAGS -L$VULKAN_SDK/lib"
-])
+    CPPFLAGS="$CPPFLAGS -I$VULKAN_SDK/include"
+    LDFLAGS="$LDFLAGS -L$VULKAN_SDK/lib"
+    glslangvalidator="$VULKAN_SDK/bin/glslangValidator"
+  ], [glslangvalidator="glslangValidator"])
 AC_CHECK_HEADER([vulkan/vulkan.h], [], [AC_MSG_ERROR(Vulkan header not found)])
 AC_CHECK_LIB([vulkan], [vkCreateInstance], [], [AC_MSG_ERROR(Vulkan library not found)])
 
@@ -53,6 +54,8 @@ AC_CHECK_HEADER([SDL2/SDL.h], [], [AC_MSG_ERROR(SDL2 headers not found)])
 AC_CHECK_LIB([SDL2], [SDL_Init], [], [AC_MSG_ERROR(SDL2 library not found)])
 AC_CHECK_HEADER([X11/Xlib-xcb.h], [], [AC_MSG_ERROR(Xlib-xcb header missing)])
 AC_CHECK_LIB([X11-xcb], [XGetXCBConnection], [], [AC_MSG_ERROR(X11 library not found)])
+
+AC_SUBST(GLSLANGVALIDATOR, [$glslangvalidator])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

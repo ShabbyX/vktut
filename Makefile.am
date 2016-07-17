@@ -46,4 +46,4 @@ V_GLSLANG_1 =
 
 %.spv: %
 	@$(mkdir_p) $(builddir)/shaders
-	$(V_GLSLANG)glslangValidator -V $< -o $@
+	$(V_GLSLANG)$(GLSLANGVALIDATOR) -V $< -o $@
