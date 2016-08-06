@@ -32,6 +32,7 @@ struct tut7_image
 	VkExtent2D extent;
 	VkImageUsageFlagBits usage;
 	VkShaderStageFlagBits stage;
+	bool make_view;
 	bool will_be_initialized;
 	bool host_visible;
 	bool multisample;
@@ -57,6 +58,7 @@ struct tut7_buffer
 	uint32_t size;
 	VkBufferUsageFlagBits usage;
 	VkShaderStageFlagBits stage;
+	bool make_view;
 	bool host_visible;
 	uint32_t *sharing_queues;
 	uint32_t sharing_queue_count;

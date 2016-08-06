@@ -227,50 +227,53 @@ tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_
 		if (res)
 			continue;
 
-		/*
-		 * Once we have an image, we need a view on the image to be able to use it.  This is just like in
-		 * Tutorial 4 where we had a view on the buffer to work with it.  In Tutorial 4, we had divided up the
-		 * buffer for concurrent processing in the shaders, and each view looked at a specific part of the
-		 * buffer.  With images, this could also be useful, for example if one large image contains multiple
-		 * areas of interest (such as a texture) where different shaders need to look at.  However, let's keep
-		 * things as simple as possible and create a view that is as large as the image itself.
-		 *
-		 * The image view's CreateInfo is largely similar to the one for buffer views.  For image views, we
-		 * need to specify which components of the image we want to view and the range is not a simple
-		 * (offset, size) as was in the buffer view.
-		 *
-		 * For the components, we have the option to not only select which components (R, G, B and A) to view,
-		 * but also to remap them (this operation is called swizzle).  For example to get the value of the red
-		 * component in place of alpha etc.  The mapping for each component can be specified separately, and
-		 * mapping 0 means identity.  We are not going to remap anything, so we'll leave all fields in
-		 * `components` be 0.
-		 *
-		 * The range of the image asks for which mipmap levels and image array layers we are interested in,
-		 * which are simply both 0 because we have only one of each.  As part of the range of the view, we also
-		 * need to specify which aspect of the image we are looking it.  This could be color, depth, stencil
-		 * etc.  Here, we will decide the aspect based on the image usage; if it's used as depth/stencil, we
-		 * will set both depth and stencil aspects.  Otherwise we will view the color aspect.
-		 */
-		VkImageViewCreateInfo view_info = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.image = images[i].image,
-			.viewType = VK_IMAGE_VIEW_TYPE_2D,
-			.format = images[i].format,
-			.subresourceRange = {
-				.aspectMask = (images[i].usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) == 0?
-						VK_IMAGE_ASPECT_COLOR_BIT:
-						VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
-				.baseMipLevel = 0,
-				.levelCount = VK_REMAINING_MIP_LEVELS,
-				.baseArrayLayer = 0,
-				.layerCount = VK_REMAINING_ARRAY_LAYERS,
-			},
-		};
+		if (images[i].make_view)
+		{
+			/*
+			 * Once we have an image, we need a view on the image to be able to use it.  This is just like in
+			 * Tutorial 4 where we had a view on the buffer to work with it.  In Tutorial 4, we had divided up the
+			 * buffer for concurrent processing in the shaders, and each view looked at a specific part of the
+			 * buffer.  With images, this could also be useful, for example if one large image contains multiple
+			 * areas of interest (such as a texture) where different shaders need to look at.  However, let's keep
+			 * things as simple as possible and create a view that is as large as the image itself.
+			 *
+			 * The image view's CreateInfo is largely similar to the one for buffer views.  For image views, we
+			 * need to specify which components of the image we want to view and the range is not a simple
+			 * (offset, size) as was in the buffer view.
+			 *
+			 * For the components, we have the option to not only select which components (R, G, B and A) to view,
+			 * but also to remap them (this operation is called swizzle).  For example to get the value of the red
+			 * component in place of alpha etc.  The mapping for each component can be specified separately, and
+			 * mapping 0 means identity.  We are not going to remap anything, so we'll leave all fields in
+			 * `components` be 0.
+			 *
+			 * The range of the image asks for which mipmap levels and image array layers we are interested in,
+			 * which are simply both 0 because we have only one of each.  As part of the range of the view, we also
+			 * need to specify which aspect of the image we are looking it.  This could be color, depth, stencil
+			 * etc.  Here, we will decide the aspect based on the image usage; if it's used as depth/stencil, we
+			 * will set both depth and stencil aspects.  Otherwise we will view the color aspect.
+			 */
+			VkImageViewCreateInfo view_info = {
+				.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+				.image = images[i].image,
+				.viewType = VK_IMAGE_VIEW_TYPE_2D,
+				.format = images[i].format,
+				.subresourceRange = {
+					.aspectMask = (images[i].usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) == 0?
+							VK_IMAGE_ASPECT_COLOR_BIT:
+							VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+					.baseMipLevel = 0,
+					.levelCount = VK_REMAINING_MIP_LEVELS,
+					.baseArrayLayer = 0,
+					.layerCount = VK_REMAINING_ARRAY_LAYERS,
+				},
+			};
 
-		res = vkCreateImageView(dev->device, &view_info, NULL, &images[i].view);
-		tut1_error_sub_set_vkresult(&retval, res);
-		if (res)
-			continue;
+			res = vkCreateImageView(dev->device, &view_info, NULL, &images[i].view);
+			tut1_error_sub_set_vkresult(&retval, res);
+			if (res)
+				continue;
+		}
 
 		if ((images[i].usage & VK_IMAGE_USAGE_SAMPLED_BIT))
 		{
@@ -430,21 +433,24 @@ tut1_error tut7_create_buffers(struct tut1_physical_device *phy_dev, struct tut2
 		if (res)
 			continue;
 
-		/* A buffer view can only be created on uniform and storage texel buffers */
-		if ((buffers[i].usage & VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT) || (buffers[i].usage & VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT))
+		if (buffers[i].make_view)
 		{
-			VkBufferViewCreateInfo view_info = {
-				.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO,
-				.buffer = buffers[i].buffer,
-				.format = buffers[i].format,
-				.offset = 0,
-				.range = VK_WHOLE_SIZE,
-			};
+			/* A buffer view can only be created on uniform and storage texel buffers */
+			if ((buffers[i].usage & VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT) || (buffers[i].usage & VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT))
+			{
+				VkBufferViewCreateInfo view_info = {
+					.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO,
+					.buffer = buffers[i].buffer,
+					.format = buffers[i].format,
+					.offset = 0,
+					.range = VK_WHOLE_SIZE,
+				};
 
-			res = vkCreateBufferView(dev->device, &view_info, NULL, &buffers[i].view);
-			tut1_error_sub_set_vkresult(&retval, res);
-			if (res)
-				continue;
+				res = vkCreateBufferView(dev->device, &view_info, NULL, &buffers[i].view);
+				tut1_error_sub_set_vkresult(&retval, res);
+				if (res)
+					continue;
+			}
 		}
 
 		++successful;
@@ -705,6 +711,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 			.format = selected_format,
 			.extent = graphics_buffers[i].surface_size,
 			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+			.make_view = true,
 			.multisample = false,
 			.will_be_initialized = false,
 		};

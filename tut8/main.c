@@ -138,13 +138,11 @@ static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, str
 	 * staging one.
 	 */
 	render_data->buffers[BUFFER_VERTICES] = (struct tut7_buffer){
-		.format = VK_FORMAT_R32_SFLOAT,		/* Note: same as the previous buffer; unused */
 		.size = sizeof render_data->vertices,
 		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		.host_visible = false,
 	};
 	render_data->buffers[BUFFER_VERTICES_STAGING] = (struct tut7_buffer){
-		.format = VK_FORMAT_R32_SFLOAT,		/* Note: same as the previous buffer; unused */
 		.size = sizeof render_data->vertices,
 		.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		.host_visible = true,
