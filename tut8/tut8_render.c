@@ -162,8 +162,8 @@ tut1_error tut8_render_transition_images(struct tut2_device *dev, struct tut7_re
 	 */
 	VkImageMemoryBarrier image_barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-		.srcAccessMask = 0,//VK_ACCESS_MEMORY_READ_BIT,
-		.dstAccessMask = 0,//VK_ACCESS_MEMORY_WRITE_BIT,
+		.srcAccessMask = 0,
+		.dstAccessMask = 0,
 		.oldLayout = from,
 		.newLayout = to,
 		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,

@@ -61,10 +61,10 @@ tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_
 		/*
 		 * To create an image, we need a CreateInfo struct as usual.  Some parts of this struct is similar to
 		 * VkBufferCreateInfo from Tutorial 3.  The ones that need explanation are explained here.  The image
-		 * type specifies whether the dimensions of the image.  In these tutorial series, we will use 2D images
-		 * for simplicity.  Also for simplicity, let's ignore mipmapping and image layers.  The image format is
-		 * one of VK_FORMAT.  A normal format could be VK_FORMAT_B8G8R8A8_UNORM, but it might make sense to use
-		 * other formats, especially for images that would get their data from a texture file.
+		 * type specifies what are the dimensions of the image.  In these tutorial series, we will use 2D
+		 * images for simplicity.  Also for simplicity, let's ignore mipmapping and image layers.  The image
+		 * format is one of VK_FORMAT.  A normal format could be VK_FORMAT_B8G8R8A8_UNORM, but it might make
+		 * sense to use other formats, especially for images that would get their data from a texture file.
 		 *
 		 * If the image is going to be initialized, for example from a texture file, then the structure of the
 		 * image data, otherwise known as "tiling", must be set to linear.  This means that the image is stored
