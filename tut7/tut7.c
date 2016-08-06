@@ -257,8 +257,7 @@ tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_
 			.viewType = VK_IMAGE_VIEW_TYPE_2D,
 			.format = images[i].format,
 			.subresourceRange = {
-				.aspectMask = (images[i].usage & (VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-								| VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)) == 0?
+				.aspectMask = (images[i].usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) == 0?
 						VK_IMAGE_ASPECT_COLOR_BIT:
 						VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
 				.baseMipLevel = 0,
