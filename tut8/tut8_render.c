@@ -19,30 +19,39 @@
 
 #include "tut8_render.h"
 
-tut1_error tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name)
+static tut1_error fill_object(struct tut2_device *dev, VkDeviceMemory to, void *from, size_t size, const char *object, const char *name)
 {
 	void *mem = NULL;
 	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
 
-	res = vkMapMemory(dev->device, to->buffer_mem, 0, size, 0, &mem);
+	res = vkMapMemory(dev->device, to, 0, size, 0, &mem);
 	tut1_error_set_vkresult(&retval, res);
 	if (res)
 	{
-		tut1_error_printf(&retval, "Failed to map memory of the %s buffer\n", name);
+		tut1_error_printf(&retval, "Failed to map memory of the %s %s\n", name, object);
 		goto exit_failed;
 	}
 
 	memcpy(mem, from, size);
 
-	vkUnmapMemory(dev->device, to->buffer_mem);
+	vkUnmapMemory(dev->device, to);
 
 exit_failed:
 	return retval;
 }
 
-tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
-		struct tut7_buffer *to, struct tut7_buffer *from, size_t size, const char *name)
+tut1_error tut8_render_fill_buffer(struct tut2_device *dev, struct tut7_buffer *to, void *from, size_t size, const char *name)
+{
+	return fill_object(dev, to->buffer_mem, from, size, "buffer", name);
+}
+
+tut1_error tut8_render_fill_image(struct tut2_device *dev, struct tut7_image *to, void *from, size_t size, const char *name)
+{
+	return fill_object(dev, to->image_mem, from, size, "image", name);
+}
+
+static tut1_error copy_object_start(struct tut2_device *dev, struct tut7_render_essentials *essentials, const char *object, const char *name)
 {
 	tut1_error retval = TUT1_ERROR_NONE;
 	VkResult res;
@@ -55,18 +64,15 @@ tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_e
 	res = vkBeginCommandBuffer(essentials->cmd_buffer, &begin_info);
 	tut1_error_set_vkresult(&retval, res);
 	if (res)
-	{
-		tut1_error_printf(&retval, "Couldn't begin recording a command buffer to copy the %s buffer\n", name);
-		goto exit_failed;
-	}
+		tut1_error_printf(&retval, "Couldn't begin recording a command buffer to copy the %s %s\n", name, object);
 
-	/* Let's see if you can figure out this very complicated operation! */
-	VkBufferCopy copy_region = {
-		.srcOffset = 0,
-		.dstOffset = 0,
-		.size = size,
-	};
-	vkCmdCopyBuffer(essentials->cmd_buffer, from->buffer, to->buffer, 1, &copy_region);
+	return retval;
+}
+
+static tut1_error copy_object_end(struct tut2_device *dev, struct tut7_render_essentials *essentials)
+{
+	tut1_error retval = TUT1_ERROR_NONE;
+	VkResult res;
 
 	vkEndCommandBuffer(essentials->cmd_buffer);
 
@@ -91,6 +97,42 @@ tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_e
 
 exit_failed:
 	return retval;
+}
+
+tut1_error tut8_render_copy_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+		struct tut7_buffer *to, struct tut7_buffer *from, size_t size, const char *name)
+{
+	tut1_error retval = TUT1_ERROR_NONE;
+
+	retval = copy_object_start(dev, essentials, "buffer", name);
+	if (!tut1_error_is_success(&retval))
+		return retval;
+
+	/* Let's see if you can figure out this very complicated operation! */
+	VkBufferCopy copy_region = {
+		.srcOffset = 0,
+		.dstOffset = 0,
+		.size = size,
+	};
+	vkCmdCopyBuffer(essentials->cmd_buffer, from->buffer, to->buffer, 1, &copy_region);
+
+	return copy_object_end(dev, essentials);
+}
+
+tut1_error tut8_render_copy_image(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+		struct tut7_image *to, VkImageLayout to_layout, struct tut7_image *from, VkImageLayout from_layout,
+		VkImageCopy *region, const char *name)
+{
+	tut1_error retval = TUT1_ERROR_NONE;
+
+	retval = copy_object_start(dev, essentials, "image", name);
+	if (!tut1_error_is_success(&retval))
+		return retval;
+
+	/* Note that vkCmdCopyImage doesn't do a layout transition.  It just needs to know the layouts to do the copy. */
+	vkCmdCopyImage(essentials->cmd_buffer, from->image, from_layout, to->image, to_layout, 1, region);
+
+	return copy_object_end(dev, essentials);
 }
 
 tut1_error tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
