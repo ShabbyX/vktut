@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include "tut1_error.h"
-#include "tut1.h"	/* TODO: once tut1_VkResult_string is moved here, remove this */
 
 /*
  * Note: this file handles error tracking and reporting, and has little to do with the tutorials themselves.  The main
@@ -93,6 +92,49 @@ bool tut1_error_is_error(struct tut1_error *error)
 	return !tut1_error_is_success(error) && !tut1_error_is_warning(error);
 }
 
+static const char *VkResult_string(VkResult res)
+{
+	switch (res)
+	{
+	case VK_SUCCESS:
+		return "Success";
+	case VK_NOT_READY:
+		return "Not ready";
+	case VK_TIMEOUT:
+		return "Timeout";
+	case VK_EVENT_SET:
+		return "Event set";
+	case VK_EVENT_RESET:
+		return "Event reset";
+	case VK_INCOMPLETE:
+		return "Incomplete";
+	case VK_ERROR_OUT_OF_HOST_MEMORY:
+		return "Out of host memory";
+	case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+		return "Out of device memory";
+	case VK_ERROR_INITIALIZATION_FAILED:
+		return "Initialization failed";
+	case VK_ERROR_DEVICE_LOST:
+		return "Device lost";
+	case VK_ERROR_MEMORY_MAP_FAILED:
+		return "Memory map failed";
+	case VK_ERROR_LAYER_NOT_PRESENT:
+		return "Layer not present";
+	case VK_ERROR_EXTENSION_NOT_PRESENT:
+		return "Extension not present";
+	case VK_ERROR_FEATURE_NOT_PRESENT:
+		return "Feature not present";
+	case VK_ERROR_INCOMPATIBLE_DRIVER:
+		return "Incompatible driver";
+	case VK_ERROR_TOO_MANY_OBJECTS:
+		return "Too many objects";
+	case VK_ERROR_FORMAT_NOT_SUPPORTED:
+		return "Format not supported";
+	default:
+		return "Unrecognized error";
+	}
+}
+
 static void print_error(FILE *fout, struct tut1_error_data *error_data, const char *prefix)
 {
 	fprintf(fout, "%s:%u: %s", error_data->file, error_data->line, prefix);
@@ -100,7 +142,7 @@ static void print_error(FILE *fout, struct tut1_error_data *error_data, const ch
 	{
 	case TUT1_ERROR_VKRESULT_WARNING:
 	case TUT1_ERROR_VKRESULT:
-		fprintf(fout, "%s (VkResult %d)\n", tut1_VkResult_string(error_data->vkresult), error_data->vkresult);
+		fprintf(fout, "%s (VkResult %d)\n", VkResult_string(error_data->vkresult), error_data->vkresult);
 		break;
 	case TUT1_ERROR_ERRNO:
 		fprintf(fout, "%s (errno %d)\n", strerror(error_data->err_no), error_data->err_no);

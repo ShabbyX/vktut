@@ -189,49 +189,6 @@ exit_failed:
 
 /* The following functions get a readable string out of the Vulkan standard enums */
 
-const char *tut1_VkResult_string(VkResult res)
-{
-	switch (res)
-	{
-	case VK_SUCCESS:
-		return "Success";
-	case VK_NOT_READY:
-		return "Not ready";
-	case VK_TIMEOUT:
-		return "Timeout";
-	case VK_EVENT_SET:
-		return "Event set";
-	case VK_EVENT_RESET:
-		return "Event reset";
-	case VK_INCOMPLETE:
-		return "Incomplete";
-	case VK_ERROR_OUT_OF_HOST_MEMORY:
-		return "Out of host memory";
-	case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-		return "Out of device memory";
-	case VK_ERROR_INITIALIZATION_FAILED:
-		return "Initialization failed";
-	case VK_ERROR_DEVICE_LOST:
-		return "Device lost";
-	case VK_ERROR_MEMORY_MAP_FAILED:
-		return "Memory map failed";
-	case VK_ERROR_LAYER_NOT_PRESENT:
-		return "Layer not present";
-	case VK_ERROR_EXTENSION_NOT_PRESENT:
-		return "Extension not present";
-	case VK_ERROR_FEATURE_NOT_PRESENT:
-		return "Feature not present";
-	case VK_ERROR_INCOMPATIBLE_DRIVER:
-		return "Incompatible driver";
-	case VK_ERROR_TOO_MANY_OBJECTS:
-		return "Too many objects";
-	case VK_ERROR_FORMAT_NOT_SUPPORTED:
-		return "Format not supported";
-	default:
-		return "Unrecognized error";
-	}
-}
-
 const char *tut1_VkPhysicalDeviceType_string(VkPhysicalDeviceType type)
 {
 	switch (type)

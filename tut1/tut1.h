@@ -43,7 +43,6 @@ struct tut1_physical_device
 
 tut1_error tut1_enumerate_devices(VkInstance vk, struct tut1_physical_device *devs, uint32_t *count);
 
-const char *tut1_VkResult_string(VkResult res);
 const char *tut1_VkPhysicalDeviceType_string(VkPhysicalDeviceType type);
 
 #endif
