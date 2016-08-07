@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = COPYING README.md
+EXTRA_DIST = COPYING README.md tut5/README.md tut5/vulkan-objects.svg tut9/README.md
 
 bin_PROGRAMS = tut1/tut1
 tut1_tut1_SOURCES = tut1/tut1.c tut1/tut1_error.c tut1/main.c tut1/tut1.h tut1/tut1_error.h
@@ -34,10 +34,15 @@ tut8_tut8_SOURCES = tut8/tut8.c tut8/tut8_render.c tut8/main.c tut8/tut8.h tut8/
                     tut7/tut7.c tut7/tut7_render.c tut6/tut6.c tut4/tut4.c tut3/tut3.c tut2/tut2.c \
                     tut1/tut1.c tut1/tut1_error.c
 
+bin_PROGRAMS += tut9/tut9
+tut9_tut9_SOURCES = tut9/main.c \
+                    tut8/tut8.c tut8/tut8_render.c tut7/tut7.c tut7/tut7_render.c tut6/tut6.c \
+                    tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
+
 shaderdir = $(datadir)/shaders
 shader_DATA = shaders/tut3.comp.spv \
-              shaders/tut8.vert.spv \
-              shaders/tut8.frag.spv
+              shaders/tut8.vert.spv shaders/tut8.frag.spv \
+              shaders/tut9.vert.spv shaders/tut9.frag.spv
 CLEANFILES = $(shader_DATA)
 
 V_GLSLANG = $(V_GLSLANG_@AM_V@)
