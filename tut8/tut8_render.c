@@ -135,6 +135,36 @@ tut1_error tut8_render_copy_image(struct tut2_device *dev, struct tut7_render_es
 	return copy_object_end(dev, essentials);
 }
 
+tut1_error tut8_render_copy_buffer_to_image(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+		struct tut7_image *to, VkImageLayout to_layout, struct tut7_buffer *from,
+		VkBufferImageCopy *region, const char *name)
+{
+	tut1_error retval = TUT1_ERROR_NONE;
+
+	retval = copy_object_start(dev, essentials, "image", name);
+	if (!tut1_error_is_success(&retval))
+		return retval;
+
+	vkCmdCopyBufferToImage(essentials->cmd_buffer, from->buffer, to->image, to_layout, 1, region);
+
+	return copy_object_end(dev, essentials);
+}
+
+tut1_error tut8_render_copy_image_to_buffer(struct tut2_device *dev, struct tut7_render_essentials *essentials,
+		struct tut7_buffer *to, struct tut7_image *from, VkImageLayout from_layout,
+		VkBufferImageCopy *region, const char *name)
+{
+	tut1_error retval = TUT1_ERROR_NONE;
+
+	retval = copy_object_start(dev, essentials, "buffer", name);
+	if (!tut1_error_is_success(&retval))
+		return retval;
+
+	vkCmdCopyImageToBuffer(essentials->cmd_buffer, from->image, from_layout, to->buffer, 1, region);
+
+	return copy_object_end(dev, essentials);
+}
+
 tut1_error tut8_render_transition_images(struct tut2_device *dev, struct tut7_render_essentials *essentials,
 		struct tut7_image *images, uint32_t image_count,
 		VkImageLayout from, VkImageLayout to, VkImageAspectFlags aspect, const char *name)
