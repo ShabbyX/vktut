@@ -399,12 +399,12 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 
 	struct render_data render_data = { .gbuffers = NULL, };
 
-	/* Allocate render essentials.  See this function in tut7_render.c for explanations */
+	/* Allocate render essentials. */
 	res = tut7_render_get_essentials(&essentials, phy_dev, dev, swapchain);
 	if (res)
 		goto exit_bad_essentials;
 
-	/* Allocate buffers and load shaders for the rendering in this tutorial */
+	/* Allocate buffers and load shaders for the rendering in this tutorial. */
 	retval = allocate_render_data(phy_dev, dev, swapchain, &essentials, &render_data);
 	if (!tut1_error_is_success(&retval))
 		goto exit_bad_render_data;

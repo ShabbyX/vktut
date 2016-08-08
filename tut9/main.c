@@ -141,7 +141,7 @@ static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, str
 	retval = tut7_create_buffers(phy_dev, dev, render_data->buffers, 4);
 	if (!tut1_error_is_success(&retval))
 	{
-		tut1_error_printf(&retval, "Failed to create vertex and transformation buffers\n");
+		tut1_error_printf(&retval, "Failed to create vertex, index and transformation buffers\n");
 		return retval;
 	}
 
@@ -228,7 +228,7 @@ static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, str
 		return retval;
 	/*
 	 * Since the vertex buffer is bigger than the index buffer, we can use the staging vertex buffer to copy data
-	 * to the index buffer as well
+	 * to the index buffer as well.
 	 */
 	retval = tut8_render_fill_buffer(dev, &render_data->buffers[BUFFER_VERTICES_STAGING], render_data->objects.indices, sizeof render_data->objects.indices, "staging index");
 	if (!tut1_error_is_success(&retval))
@@ -396,7 +396,7 @@ static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, str
 			.format = VK_FORMAT_R32G32B32_SFLOAT,
 			.offset = sizeof(float[3]),
 		},
-		/* We have an additional attribute here; the vertex coordinates */
+		/* We have an additional attribute here; the texture coordinates */
 		[2] = {
 			.location = 2,
 			.binding = 0,
@@ -539,9 +539,9 @@ static tut1_error generate_texture(struct tut2_device *dev, struct tut7_image *i
 				color -= BRICK_NOISE + rand() % (BRICK_NOISE + 1);
 
 			size_t pixel = (i * TEXTURE_WIDTH + j) * 4 * sizeof(uint8_t);
-			generated_texture[pixel + 0] = color;	/* R */
+			generated_texture[pixel + 0] = color;	/* B */
 			generated_texture[pixel + 1] = color;	/* G */
-			generated_texture[pixel + 2] = color;	/* B */
+			generated_texture[pixel + 2] = color;	/* R */
 			generated_texture[pixel + 3] = 0xFF;	/* A */
 		}
 	}
@@ -569,12 +569,12 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 
 	struct render_data render_data = { .gbuffers = NULL, };
 
-	/* Allocate render essentials.  See this function in tut7_render.c for explanations */
+	/* Allocate render essentials. */
 	res = tut7_render_get_essentials(&essentials, phy_dev, dev, swapchain);
 	if (res)
 		goto exit_bad_essentials;
 
-	/* Allocate buffers and load shaders for the rendering in this tutorial */
+	/* Allocate buffers and load shaders for the rendering in this tutorial. */
 	retval = allocate_render_data(phy_dev, dev, swapchain, &essentials, &render_data);
 	if (!tut1_error_is_success(&retval))
 		goto exit_bad_render_data;
@@ -601,6 +601,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		if (res)
 			return;
 
+		/* Render pass */
 		VkClearValue clear_values[2] = {
 			{ .color = { .float32 = {0.1, 0.1, 0.1, 255}, }, },
 			{ .depthStencil = { .depth = -1000, }, },
@@ -618,6 +619,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		};
 		vkCmdBeginRenderPass(essentials.cmd_buffer, &pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
+		/* Bindings */
 		vkCmdBindPipeline(essentials.cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render_data.pipeline.pipeline);
 
 		vkCmdBindDescriptorSets(essentials.cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -628,6 +630,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		/* Bind the index buffer as well.  Our indices are 16-bit values, so we have to indicate that here. */
 		vkCmdBindIndexBuffer(essentials.cmd_buffer, render_data.buffers[BUFFER_INDICES].buffer, 0, VK_INDEX_TYPE_UINT16);
 
+		/* Dynamic pipeline states */
 		VkViewport viewport = {
 			.x = 0,
 			.y = 0,
@@ -643,6 +646,8 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 			.extent = render_data.gbuffers[image_index].surface_size,
 		};
 		vkCmdSetScissor(essentials.cmd_buffer, 0, 1, &scissor);
+
+		/* Draw */
 
 		/*
 		 * The draw call here is now using the indexed variant.  We are saying here that 9 indices must be used

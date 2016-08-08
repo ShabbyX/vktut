@@ -56,7 +56,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 	int res;
 	struct tut7_render_essentials essentials[dev_count];
 
-	/* Allocate render essentials.  See this function in tut7_render.c for explanations */
+	/* Allocate render essentials.  See this function in tut7_render.c for explanations. */
 	for (uint32_t i = 0; i < dev_count; ++i)
 	{
 		res = tut7_render_get_essentials(&essentials[i], &phy_devs[i], &devs[i], &swapchains[i]);

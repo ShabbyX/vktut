@@ -30,7 +30,9 @@ graphics and operating systems.
 
 The `main.c` of each tutorial glues together the functionalities implemented in
 the `tut*.c` files, and may include uninteresting things like printing out
-information.  The important stuff is usually in `tut*.c` files.
+information.  The core usage of Vulkan is usually in `tut[0-9]\+.c` files,
+with `tut[0-9]\+_render.c` files containing utilities useful for rendering
+based on top of the core functions.
 
 Build and Execution
 -------------------
