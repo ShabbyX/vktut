@@ -527,56 +527,11 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 		graphics_buffers[i].framebuffer = NULL;
 	}
 
-	/*
-	 * The format of the depth/stencil image must be one that supports depth/stencil.  At the time of this writing,
-	 * the following formats in order of precision of depth are optionally available (the last in this last is
-	 * always available though):
-	 *
-	 * - VK_FORMAT_D32_SFLOAT_S8_UINT: 32-bit float for depth, 8 bits for stencil
-	 * - VK_FORMAT_D32_SFLOAT: 32-bit float for depth, no stencil
-	 * - VK_FORMAT_D24_UNORM_S8_UINT: 24 bits for depth, 8 bits for stencil
-	 * - VK_FORMAT_X8_D24_UNORM_PACK32: 24 bits for depth, 8 bits unused
-	 * - VK_FORMAT_D16_UNORM: 16 bits for depth, no stencil
-	 *
-	 * We need to make sure the format is supported, so we will query from the highest precision format to the
-	 * lowest and check this one by one!  We don't really care about stencil at this point, otherwise we should
-	 * have checked only for the formats that also support stencil.
-	 *
-	 * Since we are not going to access the depth buffer from the application but only from the shaders, we should
-	 * create it with optimal tiling, and therefore when querying for the supported formats, we should look for
-	 * formats supported for optimal tiling.
-	 */
-	VkFormat depth_formats[] = {
-		VK_FORMAT_D32_SFLOAT_S8_UINT,
-		VK_FORMAT_D32_SFLOAT,
-		VK_FORMAT_D24_UNORM_S8_UINT,
-		VK_FORMAT_X8_D24_UNORM_PACK32,
-		VK_FORMAT_D16_UNORM,
-	};
-	VkFormat selected_format = VK_FORMAT_UNDEFINED;
-
-	for (size_t i = 0; i < sizeof depth_formats / sizeof *depth_formats; ++i)
-	{
-		VkFormatProperties format_properties;
-		vkGetPhysicalDeviceFormatProperties(phy_dev->physical_device, depth_formats[i], &format_properties);
-		if ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT))
-		{
-			selected_format = depth_formats[i];
-			break;
-		}
-	}
-	/*
-	 * the standard says VK_FORMAT_D16_UNORM must always be available, but just for safety make sure some
-	 * format was found!
-	 */
-	if (selected_format == VK_FORMAT_UNDEFINED)
-	{
-		tut1_error_set_vkresult(&retval, VK_ERROR_FEATURE_NOT_PRESENT);
-		goto exit_failed;
-	}
+	/* Get a format for the depth/stencil image that supports depth/stencil attachment. */
+	VkFormat selected_format = tut7_get_supported_depth_stencil_format(phy_dev);;
 
 	/*
-	 * Since the render buffer just defines how the attachments look like, we need only one for use with all of our
+	 * Since the render pass just defines how the attachments look like, we need only one for use with all of our
 	 * swapchain images.  On the other hand, we need a different framebuffer for each swapchain image (together
 	 * with its corresponding depth/stencil image).
 	 *
@@ -698,9 +653,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 		 * As explained above, we are not going to access the depth buffer from the application, so we should
 		 * create it with optimal tiling.
 		 *
-		 * The usage of the depth/stencil image naturally contains DEPTH_STENCIL_ATTACHMENT.  Furthermore, the
-		 * image needs to be transitioned to the depth/stencil optimal layout, so it needs TRANSFER_SRC usage
-		 * as well.
+		 * The usage of the depth/stencil image naturally contains DEPTH_STENCIL_ATTACHMENT.
 		 *
 		 * The depth/stencil image is entirely accessed by the device, so it doesn't need to be host-visible.
 		 *
@@ -709,7 +662,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 		graphics_buffers[i].depth = (struct tut7_image){
 			.format = selected_format,
 			.extent = graphics_buffers[i].surface_size,
-			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			.make_view = true,
 			.multisample = false,
 			.will_be_initialized = false,
@@ -801,6 +754,51 @@ exit_failed:
 	return retval;
 }
 
+VkFormat tut7_get_supported_depth_stencil_format(struct tut1_physical_device *phy_dev)
+{
+	/*
+	 * The format of the depth/stencil image must be one that supports depth/stencil.  At the time of this writing,
+	 * the following formats in order of precision of depth are optionally available (the last in this last is
+	 * always available though):
+	 *
+	 * - VK_FORMAT_D32_SFLOAT_S8_UINT: 32-bit float for depth, 8 bits for stencil
+	 * - VK_FORMAT_D32_SFLOAT: 32-bit float for depth, no stencil
+	 * - VK_FORMAT_D24_UNORM_S8_UINT: 24 bits for depth, 8 bits for stencil
+	 * - VK_FORMAT_X8_D24_UNORM_PACK32: 24 bits for depth, 8 bits unused
+	 * - VK_FORMAT_D16_UNORM: 16 bits for depth, no stencil
+	 *
+	 * We need to make sure the format is supported, so we will query from the highest precision format to the
+	 * lowest and check this one by one!  We don't really care about stencil at this point, otherwise we should
+	 * have checked only for the formats that also support stencil.
+	 *
+	 * Since we are not going to access the depth buffer from the application but only from the shaders, we should
+	 * create it with optimal tiling, and therefore when querying for the supported formats, we should look for
+	 * formats supported for optimal tiling.
+	 */
+	VkFormat depth_formats[] = {
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_X8_D24_UNORM_PACK32,
+		VK_FORMAT_D16_UNORM,
+	};
+	VkFormat selected_format = VK_FORMAT_UNDEFINED;
+
+	for (size_t i = 0; i < sizeof depth_formats / sizeof *depth_formats; ++i)
+	{
+		VkFormatProperties format_properties;
+		vkGetPhysicalDeviceFormatProperties(phy_dev->physical_device, depth_formats[i], &format_properties);
+		if ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT))
+		{
+			selected_format = depth_formats[i];
+			break;
+		}
+	}
+
+	/* Note again that VK_FORMAT_D16_UNORM should always be available */
+	return selected_format;
+}
+
 void tut7_free_images(struct tut2_device *dev, struct tut7_image *images, uint32_t image_count)
 {
 	vkDeviceWaitIdle(dev->device);
@@ -849,8 +847,7 @@ void tut7_free_graphics_buffers(struct tut2_device *dev, struct tut7_graphics_bu
 	for (uint32_t i = 0; i < graphics_buffer_count; ++i)
 	{
 		tut7_free_images(dev, &graphics_buffers[i].depth, 1);
-		if (graphics_buffers[i].color_view)
-			vkDestroyImageView(dev->device, graphics_buffers[i].color_view, NULL);
+		vkDestroyImageView(dev->device, graphics_buffers[i].color_view, NULL);
 
 		vkDestroyFramebuffer(dev->device, graphics_buffers[i].framebuffer, NULL);
 	}

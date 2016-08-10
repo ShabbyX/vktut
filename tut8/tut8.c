@@ -278,6 +278,8 @@ tut1_error tut8_make_graphics_pipelines(struct tut2_device *dev, struct tut8_pip
 		 * - depth stencil state: this controls behavior of depth and stencil tests automatically done by the
 		 *   device, such as whether they are enabled and how to compare the values.  Depth testing is good, so
 		 *   let's enable that.  Stencil is nice too, but unnecessary for now, so we'll keep that disabled.
+		 *   Note that if the depth/stencil attachment is not provided, the depth test always passes, so we can
+		 *   always disable depth testing in the future by simply not providing an attachment for it.
 		 *
 		 * - color blend state: if we had multiple color attachments, here is where we would define how all of
 		 *   them get blended to create the final image.  We're using only one color attachment however, so we

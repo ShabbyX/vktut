@@ -32,7 +32,7 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 
 	/*
 	 * Take the first queue out of the first presentable queue family (and command buffer on it) to use for
-	 * presentation (for now)
+	 * presentation (for now).
 	 */
 	uint32_t *presentable_queues = NULL;
 	uint32_t presentable_queue_count = 0;
