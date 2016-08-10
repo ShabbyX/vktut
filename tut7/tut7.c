@@ -18,7 +18,6 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
 #include "tut7.h"
 
 tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_device *dev,

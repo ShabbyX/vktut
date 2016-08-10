@@ -40,9 +40,7 @@ struct tut8_resources
 	VkPushConstantRange *push_constants;
 	uint32_t push_constant_count;
 
-	/* buffers to render to */
-	struct tut7_graphics_buffers *graphics_buffers;
-	uint32_t graphics_buffer_count;
+	/* description of buffers to render to */
 	VkRenderPass render_pass;
 };
 

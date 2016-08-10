@@ -257,8 +257,6 @@ static tut1_error allocate_render_data(struct tut1_physical_device *phy_dev, str
 		.buffer_count = 2,
 		.shaders = render_data->shaders,
 		.shader_count = 2,
-		.graphics_buffers = render_data->gbuffers,
-		.graphics_buffer_count = essentials->image_count,
 		.render_pass = render_data->render_pass,
 	};
 	render_data->layout = (struct tut8_layout){
