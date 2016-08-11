@@ -108,21 +108,21 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (res)
 			{
 				tut1_error_printf(&retval, "Failed to determine whether queue family index %u on device %u supports presentation\n", j, i);
-				return;
+				goto exit_fail;
 			}
 
 			/* Just present to the first queue of the first family we find, for now. */
 			if (supports)
 			{
 				present_queue[i] = devs[i].command_pools[j].queues[0];
-				break;
+				goto exit_fail;
 			}
 		}
 
 		if (present_queue[i] == NULL)
 		{
 			printf("Failed to find any family queue on device %u that supports presentation\n", i);
-			return;
+			goto exit_fail;
 		}
 	}
 
@@ -176,7 +176,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (res == VK_TIMEOUT)
 			{
 				printf("A whole second and no image.  I give up.\n");
-				return;
+				goto exit_fail;
 			}
 			else if (res == VK_SUBOPTIMAL_KHR)
 				printf("Did you change the window size?  I didn't recreate the swapchains,\n"
@@ -184,7 +184,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			else if (res < 0)
 			{
 				tut1_error_printf(&retval, "Couldn't acquire image\n");
-				return;
+				goto exit_fail;
 			}
 
 			/*
@@ -224,7 +224,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (res < 0)
 			{
 				tut1_error_printf(&retval, "Failed to queue image for presentation on device %u\n", i);
-				return;
+				goto exit_fail;
 			}
 		}
 
@@ -240,6 +240,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 		usleep(10000);
 	}
 
+exit_fail:
 	for (uint32_t i = 0; i < dev_count; ++i)
 		free(images[i]);
 }

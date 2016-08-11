@@ -427,7 +427,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		/* See this function in tut7_render.c for explanations */
 		res = tut7_render_start(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &image_index);
 		if (res)
-			return;
+			break;
 
 		/*
 		 * As a reminder, tut7_render_start() starts recording in our command buffer, and tut7_render_finish()
@@ -542,7 +542,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		/* See this function in tut7_render.c for explanations */
 		res = tut7_render_finish(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, image_index);
 		if (res)
-			return;
+			break;
 	}
 
 exit_bad_render_data:

@@ -450,7 +450,8 @@ static void free_render_data(struct tut2_device *dev, struct tut7_render_essenti
 
 	tut8_free_pipelines(dev, &render_data->pipeline, 1);
 	tut8_free_layouts(dev, &render_data->layout, 1);
-	tut7_free_buffers(dev, render_data->buffers, 2);	/* Note: BUFFER_VERTICES_STAGING is already freed */
+	tut7_free_images(dev, render_data->images, 2);
+	tut7_free_buffers(dev, render_data->buffers, 3);
 	tut7_free_shaders(dev, render_data->shaders, 2);
 	tut7_free_graphics_buffers(dev, render_data->gbuffers, essentials->image_count, render_data->render_pass);
 
@@ -546,7 +547,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 		/* We saw all this in Tutorials 8 and 9.  Any changes are commented. */
 		res = tut7_render_start(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &image_index);
 		if (res)
-			return;
+			break;
 
 		/* Render pass */
 		VkClearValue clear_values[2] = {
@@ -623,7 +624,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 
 		res = tut7_render_finish(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, image_index);
 		if (res)
-			return;
+			break;
 	}
 
 exit_bad_render_data:

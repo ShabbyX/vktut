@@ -162,7 +162,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (res)
 			{
 				printf("-- failed for device %u\n", i);
-				return;
+				goto exit_fail;
 			}
 
 			/*
@@ -208,11 +208,12 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (res)
 			{
 				printf("-- failed for device %u\n", i);
-				return;
+				goto exit_fail;
 			}
 		}
 	}
 
+exit_fail:
 	for (uint32_t i = 0; i < dev_count; ++i)
 		tut7_render_cleanup_essentials(&essentials[i], &devs[i]);
 }
