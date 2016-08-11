@@ -16,6 +16,6 @@ layout (local_size_x = 64) in;
 layout (set = 0, binding = 0, r32f) uniform imageBuffer buf;
 
 void main()
-{	
+{
 	imageStore(buf, int(gl_GlobalInvocationID.x), imageLoad(buf, int(gl_GlobalInvocationID.x)) + 1);
 }

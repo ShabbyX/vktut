@@ -40,15 +40,22 @@ tut9_tut9_SOURCES = tut9/main.c \
                     tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
 
 bin_PROGRAMS += tut10/tut10
-tut10_tut10_SOURCES = tut10/main.c tut10/tut10_render.c tut10/tut10_render.h \
+tut10_tut10_SOURCES = tut10/tut10_render.c tut10/main.c tut10/tut10_render.h \
                     tut8/tut8.c tut8/tut8_render.c tut7/tut7.c tut7/tut7_render.c tut6/tut6.c \
                     tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
+
+bin_PROGRAMS += tut11/tut11
+tut11_tut11_SOURCES = tut11/tut11.c tut11/tut11_render.c tut11/main.c tut11/tut11.h tut11/tut11_render.h \
+                    tut10/tut10_render.c tut8/tut8.c tut8/tut8_render.c tut7/tut7.c tut7/tut7_render.c \
+                    tut6/tut6.c tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
 
 shaderdir = $(datadir)/shaders
 shader_DATA = shaders/tut3.comp.spv \
               shaders/tut8.vert.spv shaders/tut8.frag.spv \
               shaders/tut9.vert.spv shaders/tut9.frag.spv \
-              shaders/tut10.vert.spv shaders/tut10.frag.spv
+              shaders/tut10.vert.spv shaders/tut10.frag.spv \
+              shaders/tut11_render.vert.spv shaders/tut11_render.frag.spv \
+              shaders/tut11_postproc.vert.spv shaders/tut11_postproc.frag.spv
 CLEANFILES = $(shader_DATA)
 
 V_GLSLANG = $(V_GLSLANG_@AM_V@)
