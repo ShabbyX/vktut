@@ -528,7 +528,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 	}
 
 	/* Get a format for the depth/stencil image that supports depth/stencil attachment. */
-	VkFormat selected_format = tut7_get_supported_depth_stencil_format(phy_dev);;
+	VkFormat depth_format = tut7_get_supported_depth_stencil_format(phy_dev);;
 
 	/*
 	 * Since the render pass just defines how the attachments look like, we need only one for use with all of our
@@ -579,7 +579,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 			.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		},
 		[1] = {
-			.format = selected_format,
+			.format = depth_format,
 			.samples = VK_SAMPLE_COUNT_1_BIT,
 			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -660,7 +660,7 @@ tut1_error tut7_create_graphics_buffers(struct tut1_physical_device *phy_dev, st
 		 * Multisampling is a feature for the color attachment and is irrelevant here.
 		 */
 		graphics_buffers[i].depth = (struct tut7_image){
-			.format = selected_format,
+			.format = depth_format,
 			.extent = graphics_buffers[i].surface_size,
 			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			.make_view = true,

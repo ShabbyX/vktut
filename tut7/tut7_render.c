@@ -37,8 +37,7 @@ int tut7_render_get_essentials(struct tut7_render_essentials *essentials, struct
 	uint32_t *presentable_queues = NULL;
 	uint32_t presentable_queue_count = 0;
 
-	retval = tut7_get_presentable_queues(phy_dev, dev, swapchain->surface,
-				&presentable_queues, &presentable_queue_count);
+	retval = tut7_get_presentable_queues(phy_dev, dev, swapchain->surface, &presentable_queues, &presentable_queue_count);
 	if (!tut1_error_is_success(&retval) || presentable_queue_count == 0)
 	{
 		printf("No presentable queue families!  What kind of graphics card is this!\n");
