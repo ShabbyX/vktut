@@ -140,21 +140,20 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			 *
 			 * The significance of the fence above is the following.  In Tutorial 6, we used `usleep` to
 			 * avoid busy looping.  That was bad, because it put a hard limit and the frame rate.  The
-			 * issue is not just busy looping though.  Since the submission to queues happen
+			 * issue is not just busy looping though.  Since the submissions to queues happen
 			 * asynchronously, we risk submitting work faster than the card can actually perform them, with
 			 * the result being that frames we send now are rendered much later, after all our previous
 			 * work is finished.  This delay can easily become unacceptable; imagine a player has hit the
 			 * key to move forwards, you detect this and generate the next frame accordingly, but the
-			 * player doesn't actually see her character move forward for several frames.
+			 * player doesn't actually see her character move forward while several older frames are still
+			 * being rendered.
 			 *
 			 * The location of the fence is chosen as such, to allow maximum overlap between GPU and CPU
 			 * work.  In this case, while the GPU is still rendering, the CPU can wait for the swapchain
-			 * image to be acquired.  As a matter of fact, the wait on the fence could be performed even
-			 * later (still before the next submit, of course), as long as the "render" part doesn't change
-			 * the data the previous frame was using to render.  For example, if the "render" part sets the
-			 * "transformation matrix" for the vertex shader, the wait on the fence can be delayed until
-			 * that point.  It cannot be delayed further though, as updating the "transformation matrix"
-			 * while the previous frame is still using it is naturally incorrect.
+			 * image to be acquired.  The wait on the fence could not be delayed any further, because we
+			 * can't re-record a command buffer that is being executed.  Interestingly, if we use two
+			 * command buffers and alternate between them, we could also wait for the fence later!  Let's
+			 * not go that far yet.
 			 */
 
 			/* See this function in tut7_render.c for explanations */

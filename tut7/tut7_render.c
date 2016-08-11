@@ -126,8 +126,8 @@ int tut7_render_start(struct tut7_render_essentials *essentials, struct tut2_dev
 	 * Unless the first time we are rendering, wait for the last frame to finish rendering.  Let's wait up to a
 	 * second, and if the fence is still not signalled, we'll assume something went horribly wrong and quit.
 	 *
-	 * If no data was sent to the GPU to be used for rendering, this wait could have been delayed all the way to
-	 * just before the next submission.
+	 * This wait needs to be done before we start recording over the command buffer again, because, well, if not
+	 * we would be resetting it while it's being executed.
 	 */
 	if (!essentials->first_render)
 	{
