@@ -115,7 +115,7 @@ static void render_loop(uint32_t dev_count, struct tut1_physical_device *phy_dev
 			if (supports)
 			{
 				present_queue[i] = devs[i].command_pools[j].queues[0];
-				goto exit_fail;
+				break;
 			}
 		}
 
