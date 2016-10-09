@@ -11,23 +11,23 @@ env:
   global:
     - CFLAGS="-Wall -O2"
   matrix:
-    - VULKAN_VERSION="1.0.8.0"  VULKAN_ARCH="x86_64" GDRIVE_ID="0B7gFCFodR4vpOVBpelZORnNISVU"
-    - VULKAN_VERSION="1.0.17.0" VULKAN_ARCH="x86_64" GDRIVE_ID="0B7gFCFodR4vpTkxjMzB3TG9YaTA"
+    - VULKAN_VERSION="1.0.8.0"  VULKAN_ARCH="x86_64"
+    - VULKAN_VERSION="1.0.17.0" VULKAN_ARCH="x86_64"
+    - VULKAN_VERSION="1.0.26.0" VULKAN_ARCH="x86_64"
 
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y autoconf-archive libsdl2-dev graphviz
 
 before_script:
-  - wget "www.googledrive.com/host/$GDRIVE_ID"
-  - mv "$GDRIVE_ID" "vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION"
-  - chmod +x "vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION"
-  - ./"vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION"
+  - wget "https://vulkan.lunarg.com/sdk/download/$VULKAN_VERSION/linux/vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION.run"
+  - chmod +x "vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION.run"
+  - ./"vulkansdk-linux-$VULKAN_ARCH-$VULKAN_VERSION.run"
   - mkdir m4 || true
   - autoreconf -iv
 
 script:
-  - VULKAN_SDK="$(pwd)/VulkanSDK/$VULKAN_VERSION/$VULKAN_ARCH" ./configure
+  - VULKAN_SDK="$(pwd)/VulkanSDK/$VULKAN_VERSION/$VULKAN_ARCH" ./configure --without-ncurses    # travis's packages are too old
   - make
 
 notifications:

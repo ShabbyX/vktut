@@ -56,10 +56,18 @@ AC_CHECK_HEADER([X11/Xlib-xcb.h], [], [AC_MSG_ERROR(Xlib-xcb header missing)])
 AC_CHECK_LIB([X11-xcb], [XGetXCBConnection], [], [AC_MSG_ERROR(X11 library not found)])
 
 # Optional libraries
-has_ncurses=y
-AC_CHECK_HEADER([curses.h], [], [has_ncurses=n])
-AS_IF([test x"$has_ncurses" != xy], [AC_CHECK_HEADER([ncurses/curses.h], [has_ncurses=y], [has_ncurses=n])])
-AC_CHECK_LIB([ncurses], [initscr], [], [has_ncurses=n])
+AC_ARG_WITH(ncurses,
+  [AS_HELP_STRING([--with-ncurses@<:@=ARG@:>@], [Whether ncurses tutorials should be built @<:@default=yes@:>@])],
+  [AS_CASE(["$withval"],
+    ["" | y | ye | yes], [with_ncurses="y"],
+    [n | no], [with_ncurses="n"],
+    [*], [AC_MSG_ERROR([Bad argument to --with-ncurses.  See --help])])])
+has_ncurses="$with_ncurses"
+AS_IF([test x"$with_ncurses" = xy], [
+  AC_CHECK_HEADER([curses.h], [], [has_ncurses=n])
+  AS_IF([test x"$has_ncurses" != xy], [AC_CHECK_HEADER([ncurses/curses.h], [has_ncurses=y], [has_ncurses=n])])
+  AC_CHECK_LIB([ncurses], [initscr], [], [has_ncurses=n])
+])
 
 AC_SUBST(GLSLANGVALIDATOR, [$glslangvalidator])
 
