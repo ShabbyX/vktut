@@ -49,13 +49,21 @@ tut11_tut11_SOURCES = tut11/tut11.c tut11/tut11_render.c tut11/main.c tut11/tut1
                     tut10/tut10_render.c tut8/tut8.c tut8/tut8_render.c tut7/tut7.c tut7/tut7_render.c \
                     tut6/tut6.c tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
 
+if HAVE_NCURSES
+bin_PROGRAMS += tut12/tut12
+tut12_tut12_SOURCES = tut12/tut12.c tut12/main.c tut12/tut12.h \
+                    tut8/tut8.c tut8/tut8_render.c tut7/tut7.c tut7/tut7_render.c tut6/tut6.c \
+                    tut4/tut4.c tut3/tut3.c tut2/tut2.c tut1/tut1.c tut1/tut1_error.c
+endif
+
 shaderdir = $(datadir)/shaders
 shader_DATA = shaders/tut3.comp.spv \
               shaders/tut8.vert.spv shaders/tut8.frag.spv \
               shaders/tut9.vert.spv shaders/tut9.frag.spv \
               shaders/tut10.vert.spv shaders/tut10.frag.spv \
               shaders/tut11_render.vert.spv shaders/tut11_render.frag.spv \
-              shaders/tut11_postproc.vert.spv shaders/tut11_postproc.frag.spv
+              shaders/tut11_postproc.vert.spv shaders/tut11_postproc.frag.spv \
+              shaders/tut12.vert.spv shaders/tut12.frag.spv
 CLEANFILES = $(shader_DATA)
 
 V_GLSLANG = $(V_GLSLANG_@AM_V@)

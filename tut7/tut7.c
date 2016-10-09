@@ -140,7 +140,7 @@ tut1_error tut7_create_images(struct tut1_physical_device *phy_dev, struct tut2_
 		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		if (images[i].will_be_initialized)
+		if (images[i].will_be_initialized || images[i].host_visible)
 		{
 			images[i].usage &= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			layout = VK_IMAGE_LAYOUT_PREINITIALIZED;

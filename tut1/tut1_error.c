@@ -130,6 +130,23 @@ static const char *VkResult_string(VkResult res)
 		return "Too many objects";
 	case VK_ERROR_FORMAT_NOT_SUPPORTED:
 		return "Format not supported";
+#if 0
+	/* TODO: enable this when it becomes wide-spread (new error code in 1.0.22) */
+	case VK_ERROR_FRAGMENTED_POOL:
+		return "Allocation failure due to fragmented pool";
+#endif
+	case VK_ERROR_SURFACE_LOST_KHR:
+		return "Surface lost";
+	case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+		return "Native window is in use";
+	case VK_SUBOPTIMAL_KHR:
+		return "Suboptimal";
+	case VK_ERROR_OUT_OF_DATE_KHR:
+		return "Surface is out of date";
+	case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+		return "Incompatible display";
+	case VK_ERROR_VALIDATION_FAILED_EXT:
+		return "Validation failed";
 	default:
 		return "Unrecognized error";
 	}

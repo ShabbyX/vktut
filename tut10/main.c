@@ -622,6 +622,7 @@ static void render_loop(struct tut1_physical_device *phy_dev, struct tut2_device
 
 		vkCmdEndRenderPass(essentials.cmd_buffer);
 
+		/* Stop recording and present image */
 		res = tut7_render_finish(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, image_index);
 		if (res)
 			break;

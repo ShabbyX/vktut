@@ -14,12 +14,13 @@ which tutorial you should refer to, if you don't remember what that function
 does.
 
 These tutorials were developed in Linux, and I have no intention of trying them
-on Windows.  Feel free to send a pull request if they needed tweaks to run on
-that.  You would need the following external libraries:
+on Windows.  Feel free to send a pull request for the tweaks they would need to
+run on that.  You would need the following external libraries:
 
 - Vulkan, of course
 - SDL2
 - X11-xcb
+- ncurses (optional for Tutorial 12)
 
 The tutorials are source code themselves, with enough comments in them to
 explain how things are done and/or why.  I strongly recommend reading the
