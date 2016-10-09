@@ -56,6 +56,7 @@ AC_CHECK_HEADER([X11/Xlib-xcb.h], [], [AC_MSG_ERROR(Xlib-xcb header missing)])
 AC_CHECK_LIB([X11-xcb], [XGetXCBConnection], [], [AC_MSG_ERROR(X11 library not found)])
 
 # Optional libraries
+with_ncurses=y
 AC_ARG_WITH(ncurses,
   [AS_HELP_STRING([--with-ncurses@<:@=ARG@:>@], [Whether ncurses tutorials should be built @<:@default=yes@:>@])],
   [AS_CASE(["$withval"],
