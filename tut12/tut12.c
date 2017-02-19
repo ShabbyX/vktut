@@ -730,10 +730,9 @@ exit_failed:
 
 void vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain, const VkAllocationCallbacks *allocator)
 {
-	if (swapchain == NULL)
-		return;
-
 	struct ncurses_swapchain *sw = swapchain_cache[SWAPCHAIN_INDEX(swapchain)];
+	if (sw == NULL)
+		return;
 
 	sw->request_stop = true;
 	if (sw->thread_created)
