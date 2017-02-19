@@ -22,7 +22,7 @@
 #include "tut5.h"
 
 #define TUT5_MAX_LAYER_COUNT 20
-#define TUT5_MAX_EXTENSION_COUNT 10
+#define TUT5_MAX_EXTENSION_COUNT 20
 
 static tut1_error get_layers_and_extensions(VkLayerProperties layers[TUT5_MAX_LAYER_COUNT], uint32_t *layer_count,
 		VkExtensionProperties extensions[TUT5_MAX_LAYER_COUNT + 1][TUT5_MAX_EXTENSION_COUNT], uint32_t extensions_count[TUT5_MAX_LAYER_COUNT + 1])
