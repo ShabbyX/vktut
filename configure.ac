@@ -57,7 +57,7 @@ AC_CHECK_LIB([X11-xcb], [XGetXCBConnection], [], [AC_MSG_ERROR(X11 library not f
 
 # Optional libraries
 AC_ARG_WITH(ncurses,
-  [AS_HELP_STRING([--with-ncurses@<:@=ARG@:>@], [Whether ncurses tutorials should be built @<:@default=yes@:>@])])
+  [AS_HELP_STRING([--with-ncurses@<:@=ARG@:>@], [Whether ncurses tutorials should be built @<:@default=yes@:>@])], , [with_ncurses=yes])
 AS_IF([test x"$with_ncurses" = xyes], [
   AC_CHECK_HEADER([curses.h], [], [with_ncurses=no])
   AS_IF([test x"$with_ncurses" != xyes], [AC_CHECK_HEADER([ncurses/curses.h], [with_ncurses=yes], [with_ncurses=no])])
