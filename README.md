@@ -1,5 +1,13 @@
-Shabi's Vulkan Tutorials
-========================
+Shabi's Vulkan Tutorials (!OUTDATED!)
+=====================================
+
+**NOTE: Do NOT follow this tutorial, Vulkan has improved a lot, and the API
+presented in these tutorials is outdated.  For example, use dynamic rendering
+(introduced in VK_KHR_dynamic_rendering, promoted to Vulkan 1.3) instead of
+VkRenderPass objects.  Another examples include use of dynamic state,
+VK_EXT_graphics_pipeline_library (or VK_EXT_shader_object),
+VK_KHR_synchronization2, timeline semaphores, descriptor buffers, descriptor
+indexing and more.**
 
 Travis-CI: [![Build Status](https://travis-ci.org/ShabbyX/vktut.svg?branch=master)](https://travis-ci.org/ShabbyX/vktut)
 
